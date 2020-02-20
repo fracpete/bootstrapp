@@ -73,6 +73,9 @@ public class Main {
   /** whether to generate start scripts (when supplying a main class). */
   protected boolean m_Scripts;
 
+  /** whether to create spring-boot jar. */
+  protected boolean m_SpringBoot;
+
   /** whether to launch the main class. */
   protected boolean m_Launch;
 
@@ -104,6 +107,7 @@ public class Main {
     m_Sources        = false;
     m_Scripts        = false;
     m_Launch         = false;
+    m_SpringBoot     = false;
     m_Logger         = null;
     m_HelpRequested  = false;
   }
@@ -328,6 +332,26 @@ public class Main {
   }
 
   /**
+   * Sets whether to create spring-boot jar.
+   *
+   * @param springBoot	true if to generate jar
+   * @return		itself
+   */
+  public Main springBoot(boolean springBoot) {
+    m_SpringBoot = springBoot;
+    return this;
+  }
+
+  /**
+   * Returns whether to create spring-boot jar.
+   *
+   * @return		true if to generate jar
+   */
+  public boolean getSpringBoot() {
+    return m_SpringBoot;
+  }
+
+  /**
    * Sets whether to launch the main class.
    *
    * @param launch	true if to launch
@@ -400,6 +424,11 @@ public class Main {
       .setDefault(false)
       .dest("scripts")
       .help("If enabled, shell/batch scripts get generated to launch the main class.");
+    parser.addOption("-b", "--spring-boot")
+      .type(Type.BOOLEAN)
+      .setDefault(false)
+      .dest("spring_boot")
+      .help("If enabled, a spring-boot jar is generated utilizing the main class (single jar with all dependencies contained).");
     parser.addOption("-l", "--launch")
       .type(Type.BOOLEAN)
       .setDefault(false)
@@ -425,6 +454,7 @@ public class Main {
     pomTemplate(ns.getFile("pom_template"));
     mainClass(ns.getString("main_class"));
     scripts(ns.getBoolean("scripts"));
+    springBoot(ns.getBoolean("spring_boot"));
     launch(ns.getBoolean("launch"));
     return true;
   }
@@ -535,14 +565,14 @@ public class Main {
     String	result;
 
     if (m_PomTemplate == null) {
-      result = Template.configureBundledTemplate(m_OutputDir, m_OutputDirMaven, m_Dependencies, !m_Sources);
+      result = Template.configureBundledTemplate(m_OutputDir, m_OutputDirMaven, m_Dependencies, !m_Sources, !m_SpringBoot, m_MainClass);
     }
     else {
       if (!m_PomTemplate.exists())
 	return "pom.xml template does not exist: " + m_PomTemplate;
       if (m_PomTemplate.isDirectory())
 	return "pom.xml template points to a directory: " + m_PomTemplate;
-      result = Template.configureTemplate(m_PomTemplate, m_OutputDir, m_OutputDir, m_Dependencies, !m_Sources);
+      result = Template.configureTemplate(m_PomTemplate, m_OutputDir, m_OutputDir, m_Dependencies, !m_Sources, !m_SpringBoot, m_MainClass);
     }
 
     if (result == null)

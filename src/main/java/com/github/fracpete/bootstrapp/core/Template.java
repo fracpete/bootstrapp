@@ -30,6 +30,15 @@ public class Template {
   /** the placeholder in the template POM to skip downloading the sources (boolean). */
   public final static String PH_NOSOURCES = "<!-- nosources -->";
 
+  /** the placeholder in the template POM to skip spring-boot jar generation (boolean). */
+  public final static String PH_NOSPRINGBOOT = "<!-- nospringboot -->";
+
+  /** the placeholder in the template POM for the main class (string). */
+  public final static String PH_MAINCLASS = "<!-- mainclass -->";
+
+  /** the placeholder in the template POM for the packaging (string, pom/jar). */
+  public final static String PH_PACKAGING = "<!-- packaging -->";
+
   /** for logging. */
   protected static Logger LOGGER = Logger.getLogger(Template.class.getName());
 
@@ -37,18 +46,21 @@ public class Template {
    * Configures the bundled template.
    *
    * @param outputDir		the directory to copy the template to (as pom.xml)
+   * @param outputDirMaven 	the output directory to use by the maven build
    * @param dependencies	the list of artifacts to bootstrap with
    * @param noSources		whether to skip downloading sources
+   * @param noSpringBoot 	whether to skip generating a spring-boot jar
+   * @param mainClass 		the main class to use
    * @return			null if successful, otherwise error message
    */
-  public static String configureBundledTemplate(File outputDir, File outputDirMaven, List<String> dependencies, boolean noSources) {
+  public static String configureBundledTemplate(File outputDir, File outputDirMaven, List<String> dependencies, boolean noSources, boolean noSpringBoot, String mainClass) {
     String	result;
     String	path;
     File	file;
 
     try {
       path = Resources.copyResourceTo(Resources.LOCATION, TEMPLATE_FILE, System.getProperty("java.io.tmpdir"));
-      result = configureTemplate(new File(path), outputDir, outputDirMaven, dependencies, noSources);
+      result = configureTemplate(new File(path), outputDir, outputDirMaven, dependencies, noSources, noSpringBoot, mainClass);
       file = new File(path);
       if (file.exists())
         file.delete();
@@ -64,11 +76,14 @@ public class Template {
    *
    * @param template 		the template file to configure
    * @param outputDir		the directory to copy the template to (as pom.xml)
+   * @param outputDirMaven 	the output directory to use by the maven build
    * @param dependencies	the list of artifacts to bootstrap with
    * @param noSources		whether to skip downloading sources
+   * @param noSpringBoot 	whether to skip generating a spring-boot jar
+   * @param mainClass 		the main class to use
    * @return			null if successful, otherwise error message
    */
-  public static String configureTemplate(File template, File outputDir, File outputDirMaven, List<String> dependencies, boolean noSources) {
+  public static String configureTemplate(File template, File outputDir, File outputDirMaven, List<String> dependencies, boolean noSources, boolean noSpringBoot, String mainClass) {
     List<String>	lines;
     int			i;
     String		line;
@@ -107,6 +122,10 @@ public class Template {
           line = line.replace(PH_DEPENDENCIES, depsStr);
           line = line.replace(PH_OUTPUTDIR, outputDirMaven.getAbsolutePath());
           line = line.replace(PH_NOSOURCES, "" + noSources);
+          line = line.replace(PH_NOSPRINGBOOT, "" + noSpringBoot);
+          line = line.replace(PH_PACKAGING, noSpringBoot ? "pom" : "jar");
+          if (mainClass != null)
+	    line = line.replace(PH_MAINCLASS, "" + mainClass);
           if (!lines.get(i).equals(line)) {
 	    lines.set(i, line);
 	    modified = true;

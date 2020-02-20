@@ -6,7 +6,7 @@
   <groupId>com.github.fracpete</groupId>
   <artifactId>bootstrapp-harness</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <packaging>pom</packaging>
+  <packaging><!-- packaging --></packaging>
 
   <parent>
     <groupId>org.sonatype.oss</groupId>
@@ -49,6 +49,24 @@
               <outputDirectory>${project.build.directory}/src</outputDirectory>
               <classifier>sources</classifier>
               <skip><!-- nosources --></skip>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>2.1.4.RELEASE</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+            <configuration>
+              <classifier>spring-boot</classifier>
+              <mainClass><!-- mainclass --></mainClass>
+              <skip><!-- nospringboot --></skip>
             </configuration>
           </execution>
         </executions>
