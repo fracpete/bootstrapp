@@ -80,3 +80,23 @@ public static class TestBootstrapp {
   }
 }
 ```
+
+## Releases
+
+Below are executable spring-boot jars for download that can be executed
+via `java -jar XYZ.jar [options]`:
+
+* [0.0.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.1/bootstrapp-0.0.1-spring-boot.jar)
+
+
+## Maven
+
+```xml
+    <dependency>
+      <groupId>com.github.fracpete</groupId>
+      <artifactId>bootstrapp</artifactId>
+      <version>0.0.1</version>
+    </dependency>
+```
+
+
