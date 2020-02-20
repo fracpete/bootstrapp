@@ -191,6 +191,20 @@ public class Main {
   }
 
   /**
+   * Sets the dependencies to use for bootstrapping.
+   *
+   * @param options	the dependencies, can be null
+   * @return		itself
+   */
+  public Main dependencies(String... options) {
+    if (options != null)
+      m_Dependencies = new ArrayList<>(Arrays.asList(options));
+    else
+      m_Dependencies = null;
+    return this;
+  }
+
+  /**
    * Returns the dependencies.
    *
    * @return		the dependencies, can be null
@@ -247,6 +261,20 @@ public class Main {
    */
   public Main jvm(List<String> options) {
     m_JVM = options;
+    return this;
+  }
+
+  /**
+   * Sets the JVM options to use for launching the main class.
+   *
+   * @param options	the options, can be null
+   * @return		itself
+   */
+  public Main jvm(String... options) {
+    if (options != null)
+      m_JVM = new ArrayList<>(Arrays.asList(options));
+    else
+      m_JVM = null;
     return this;
   }
 
