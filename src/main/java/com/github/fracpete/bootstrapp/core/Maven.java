@@ -43,6 +43,12 @@ public class Maven {
   /** the file with the file names of the bundled maven installation. */
   public final static String BUNDLEDFILES_FILE = "apache-maven.files";
 
+  /** the file with the file names of the executables. */
+  public final static String EXECUTABLES_FILE = "apache-maven.executables";
+
+  /** the location of the bundled maven installation. */
+  public final static String LOCATION = Resources.LOCATION + "/apache-maven/";
+
   /** the version of the bundled maven installation. */
   protected static String VERSION = null;
 
@@ -82,9 +88,8 @@ public class Maven {
     else {
       result = System.getProperty("user.home");
 
-      if (!SystemUtils.IS_OS_WINDOWS) {
+      if (!SystemUtils.IS_OS_WINDOWS)
 	result += "/.local/share";
-      }
 
       result += "/bootstrapp/mvn-" + version();
     }
@@ -104,6 +109,7 @@ public class Maven {
     String		name;
     File		file;
     String		home;
+    File		outDir;
 
     dir = new File(homeDir());
 
@@ -111,18 +117,35 @@ public class Maven {
     if (dir.exists() && dir.isDirectory())
       return null;
 
+    if (!dir.mkdirs())
+      return "Failed to create directory for bundled Maven installation: " + dir;
+
+    home = homeDir();
+
+    // copy files
     lines = Resources.readLines(Resources.LOCATION + "/" + BUNDLEDFILES_FILE);
-    home  = homeDir();
     for (String line: lines) {
       file  = new File(line);
       inDir = file.getParent();
       name  = file.getName();
       try {
-	Resources.copyResourceTo(inDir, name, home);
+        outDir = new File(home + "/" + (inDir == null ? "" : inDir));
+        if (!outDir.exists())
+          outDir.mkdirs();
+	Resources.copyResourceTo(LOCATION + "/" + (inDir == null ? "" : inDir), name, outDir.getAbsolutePath());
       }
       catch (Exception e) {
         LOGGER.log(Level.SEVERE, "Failed to copy '" + line + "' to '" + home + "'!", e);
         return "Failed to copy '" + line + "' to '" + home + "': " + e;
+      }
+    }
+
+    // set executable flags
+    if (!SystemUtils.IS_OS_WINDOWS) {
+      lines = Resources.readLines(Resources.LOCATION + "/" + EXECUTABLES_FILE);
+      for (String line : lines) {
+	file = new File(home + "/" + line);
+	file.setExecutable(true);
       }
     }
 

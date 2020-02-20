@@ -20,6 +20,7 @@
 
 package com.github.fracpete.bootstrapp;
 
+import com.github.fracpete.bootstrapp.core.Maven;
 import com.github.fracpete.bootstrapp.core.Template;
 import com.github.fracpete.processoutput4j.core.impl.SimpleStreamingProcessOwner;
 import com.github.fracpete.processoutput4j.output.StreamingProcessOutput;
@@ -438,10 +439,16 @@ public class Main {
    * @see		#m_ActMavenHome
    */
   protected String initMavenHome() {
-    if (m_MavenHome == null)
-      m_ActMavenHome = new File("TODO");  // TODO extract and use bundled Maven
-    else
+    String	result;
+
+    if (m_MavenHome == null) {
+      if ((result = Maven.initBundledMaven()) != null)
+        return result;
+      m_ActMavenHome = new File(Maven.homeDir());
+    }
+    else {
       m_ActMavenHome = m_MavenHome;
+    }
     if (!m_ActMavenHome.exists())
       return "Maven home does not exist: " + m_ActMavenHome;
     if (!m_ActMavenHome.isDirectory())
