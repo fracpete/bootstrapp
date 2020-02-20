@@ -20,9 +20,13 @@
 
 package com.github.fracpete.bootstrapp;
 
+import com.github.fracpete.bootstrapp.core.Template;
+import com.github.fracpete.processoutput4j.core.impl.SimpleStreamingProcessOwner;
+import com.github.fracpete.processoutput4j.output.StreamingProcessOutput;
 import com.github.fracpete.simpleargparse4j.ArgumentParser;
 import com.github.fracpete.simpleargparse4j.ArgumentParserException;
 import com.github.fracpete.simpleargparse4j.Namespace;
+import com.github.fracpete.simpleargparse4j.Option.Type;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -32,6 +36,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Command-line application for bootstrapping a Maven appplication.
@@ -41,13 +47,22 @@ import java.util.List;
 public class Main {
 
   /** the alternative maven installation. */
-  protected String m_MavenHome;
+  protected File m_MavenHome;
+
+  /** the actual maven home to use. */
+  protected transient File m_ActMavenHome;
 
   /** the alternative java installation. */
-  protected String m_JavaHome;
+  protected File m_JavaHome;
+
+  /** the actual Java home to use. */
+  protected transient File m_ActJavaHome;
 
   /** the output directory. */
-  protected String m_OutputDir;
+  protected File m_OutputDir;
+
+  /** the output directory for maven. */
+  protected File m_OutputDirMaven;
 
   /** the JVM options. */
   protected List<String> m_JVM;
@@ -56,10 +71,25 @@ public class Main {
   protected List<String> m_Dependencies;
 
   /** the pom template. */
-  protected String m_PomTemplate;
+  protected File m_PomTemplate;
+
+  /** the actual POM template to use. */
+  protected transient File m_ActPomTemplate;
 
   /** the main class to launch. */
   protected String m_MainClass;
+
+  /** whether to retrieve source jars or not. */
+  protected boolean m_Sources;
+
+  /** whether to generate start scripts (when supplying a main class). */
+  protected boolean m_Scripts;
+
+  /** whether to launch the main class. */
+  protected boolean m_Launch;
+
+  /** for logging. */
+  protected Logger m_Logger;
 
   /**
    * Initializes the object.
@@ -72,13 +102,29 @@ public class Main {
    * Initializes the members.
    */
   protected void initialize() {
-    m_MavenHome    = null;
-    m_JavaHome     = null;
-    m_OutputDir    = null;
-    m_JVM          = null;
-    m_Dependencies = null;
-    m_MavenHome    = null;
-    m_PomTemplate  = null;
+    m_MavenHome      = null;
+    m_JavaHome       = null;
+    m_OutputDir      = null;
+    m_OutputDirMaven = null;
+    m_JVM            = null;
+    m_Dependencies   = null;
+    m_MavenHome      = null;
+    m_PomTemplate    = null;
+    m_Sources        = false;
+    m_Scripts        = false;
+    m_Launch         = false;
+    m_Logger         = null;
+  }
+
+  /**
+   * Returns the logger instance to use.
+   *
+   * @return		the logger
+   */
+  protected Logger getLogger() {
+    if (m_Logger == null)
+      m_Logger = Logger.getLogger(getClass().getName());
+    return m_Logger;
   }
 
   /**
@@ -87,7 +133,7 @@ public class Main {
    * @param dir		the top-level directory (above "bin")
    * @return		itself
    */
-  public Main mavenHome(String dir) {
+  public Main mavenHome(File dir) {
     m_MavenHome = dir;
     return this;
   }
@@ -97,7 +143,7 @@ public class Main {
    *
    * @return		the directory, null to use bundled one
    */
-  public String getMavenHome() {
+  public File getMavenHome() {
     return m_MavenHome;
   }
 
@@ -107,7 +153,7 @@ public class Main {
    * @param dir		the top-level directory (above "bin")
    * @return		itself
    */
-  public Main javaHome(String dir) {
+  public Main javaHome(File dir) {
     m_JavaHome = dir;
     return this;
   }
@@ -117,7 +163,7 @@ public class Main {
    *
    * @return		the directory, null if using one that class was started with
    */
-  public String getJavaHome() {
+  public File getJavaHome() {
     return m_JavaHome;
   }
 
@@ -127,7 +173,7 @@ public class Main {
    * @param dir		the directory
    * @return		itself
    */
-  public Main outputDir(String dir) {
+  public Main outputDir(File dir) {
     m_OutputDir = dir;
     return this;
   }
@@ -137,7 +183,7 @@ public class Main {
    *
    * @return		the directory, null if none set
    */
-  public String getOutputDir() {
+  public File getOutputDir() {
     return m_OutputDir;
   }
 
@@ -162,12 +208,32 @@ public class Main {
   }
 
   /**
+   * Sets whether to retrieve the source jars as well.
+   *
+   * @param sources	true if to get sources
+   * @return		itself
+   */
+  public Main sources(boolean sources) {
+    m_Sources = sources;
+    return this;
+  }
+
+  /**
+   * Returns whether to download source jars as well.
+   *
+   * @return		true if to get sources
+   */
+  public boolean getSources() {
+    return m_Sources;
+  }
+
+  /**
    * Sets the template for the POM to use.
    *
    * @param template	the template
    * @return		itself
    */
-  public Main pomTemplate(String template) {
+  public Main pomTemplate(File template) {
     m_PomTemplate = template;
     return this;
   }
@@ -177,7 +243,7 @@ public class Main {
    *
    * @return		the POM template, null if using the default
    */
-  public String getPomTemplate() {
+  public File getPomTemplate() {
     return m_PomTemplate;
   }
 
@@ -222,6 +288,46 @@ public class Main {
   }
 
   /**
+   * Sets whether to create scripts for launching the main class.
+   *
+   * @param scripts	true if to create scripts
+   * @return		itself
+   */
+  public Main scripts(boolean scripts) {
+    m_Scripts = scripts;
+    return this;
+  }
+
+  /**
+   * Returns whether to create scripts for launching the main class.
+   *
+   * @return		true if to create scripts
+   */
+  public boolean getScripts() {
+    return m_Scripts;
+  }
+
+  /**
+   * Sets whether to launch the main class.
+   *
+   * @param launch	true if to launch
+   * @return		itself
+   */
+  public Main launch(boolean launch) {
+    m_Launch = launch;
+    return this;
+  }
+
+  /**
+   * Returns whether to launch the main class.
+   *
+   * @return		true if to launch
+   */
+  public boolean getLaunch() {
+    return m_Launch;
+  }
+
+  /**
    * Configures and returns the commandline parser.
    *
    * @return		the parser
@@ -230,36 +336,55 @@ public class Main {
     ArgumentParser 		parser;
 
     parser = new ArgumentParser("");
-    parser.addOption("-m")
+    parser.addOption("-m", "--maven_home")
       .required(false)
+      .type(Type.EXISTING_DIR)
       .dest("maven_home")
       .help("The directory with a local Maven installation to use instead of the bundled one.");
-    parser.addOption("-j")
+    parser.addOption("-j", "--java_home")
       .required(false)
+      .type(Type.EXISTING_DIR)
       .dest("java_home")
       .help("The Java home to use for the Maven execution.");
-    parser.addOption("-d")
+    parser.addOption("-d", "--dependency")
       .required(true)
       .multiple(true)
       .dest("dependencies")
       .help("The maven dependencies to use for bootstrapping the application (group:artifact:version), e.g.: nz.ac.waikato.cms.weka:weka-dev:3.9.4");
-    parser.addOption("-p")
+    parser.addOption("-s", "--sources")
+      .type(Type.BOOLEAN)
+      .setDefault(false)
+      .dest("sources")
+      .help("If enabled, source jars of the Maven artifacts will get downloaded as well and stored in a separated directory.");
+    parser.addOption("-p", "--pom_template")
       .required(false)
+      .type(Type.EXISTING_FILE)
       .dest("pom_template")
       .help("The alternative template for the pom.xml to use.");
-    parser.addOption("-o")
+    parser.addOption("-o", "--output_dir")
       .required(true)
+      .type(Type.DIRECTORY)
       .dest("output_dir")
       .help("The directory to output the bootstrapped application in.");
-    parser.addOption("-c")
+    parser.addOption("-c", "--main_class")
       .required(false)
       .dest("main_class")
       .help("The main class to execute after bootstrapping the application.");
-    parser.addOption("-v")
+    parser.addOption("-v", "--jvm")
       .required(false)
       .multiple(true)
       .dest("jvm")
       .help("The parameters to pass to the JVM before launching the application.");
+    parser.addOption("-e", "--scripts")
+      .type(Type.BOOLEAN)
+      .setDefault(false)
+      .dest("scripts")
+      .help("If enabled, shell/batch scripts get generated to launch the main class.");
+    parser.addOption("-l", "--launch")
+      .type(Type.BOOLEAN)
+      .setDefault(false)
+      .dest("launch")
+      .help("If enabled, the supplied main class will get launched.");
 
     return parser;
   }
@@ -271,13 +396,16 @@ public class Main {
    * @return		if successfully set
    */
   protected boolean setOptions(Namespace ns) {
-    mavenHome(ns.getString("maven_home"));
-    javaHome(ns.getString("java_home"));
-    outputDir(ns.getString("output_dir"));
+    mavenHome(ns.getFile("maven_home"));
+    javaHome(ns.getFile("java_home"));
+    outputDir(ns.getFile("output_dir"));
     jvm(ns.getList("jvm"));
     dependencies(ns.getList("dependencies"));
-    pomTemplate(ns.getString("pom_template"));
+    sources(ns.getBoolean("sources"));
+    pomTemplate(ns.getFile("pom_template"));
     mainClass(ns.getString("main_class"));
+    scripts(ns.getBoolean("scripts"));
+    launch(ns.getBoolean("launch"));
     return true;
   }
 
@@ -304,102 +432,206 @@ public class Main {
   }
 
   /**
-   * Performs the bootstrapping.
+   * Initializes Maven support.
+   *
+   * @return		null if successful, otherwise error message
+   * @see		#m_ActMavenHome
+   */
+  protected String initMavenHome() {
+    if (m_MavenHome == null)
+      m_ActMavenHome = new File("TODO");  // TODO extract and use bundled Maven
+    else
+      m_ActMavenHome = m_MavenHome;
+    if (!m_ActMavenHome.exists())
+      return "Maven home does not exist: " + m_ActMavenHome;
+    if (!m_ActMavenHome.isDirectory())
+      return "Maven home is not a directory: " + m_ActMavenHome;
+    System.setProperty("maven.home", m_ActMavenHome.getAbsolutePath());
+
+    return null;
+  }
+
+  /**
+   * Initializes Java (if a main class has been supplied).
+   *
+   * @return		null if successful, otherwise error message
+   * @see		#m_JavaHome
+   */
+  protected String initJavaHome() {
+    if (m_MainClass != null) {
+      if (m_JavaHome == null)
+	m_ActJavaHome = new File(System.getProperty("java.home"));
+      else
+	m_ActJavaHome = m_JavaHome;
+      if (!m_ActJavaHome.exists())
+	return "Java home does not exist: " + m_ActJavaHome;
+      if (!m_ActJavaHome.isDirectory())
+	return "Java home is not a directory: " + m_ActJavaHome;
+    }
+    return null;
+  }
+
+  /**
+   * Initializes the output directory.
    *
    * @return		null if successful, otherwise error message
    */
-  public String execute() {
-    String		actMavenHome;
-    File		actMavenHomeDir;
-    String		actPomTemplate;
-    File		actPomTemplateFile;
-    String		actJavaHome;
-    File		actJavaHomeDir;
-    File		outputDir;
+  protected String initOutputDir() {
+    if (!m_OutputDir.exists()) {
+      if (!m_OutputDir.mkdirs())
+	return "Failed to create output directory: " + m_OutputDir;
+    }
+    if (!m_OutputDir.isDirectory())
+      return "Output directory is not a directory: " + m_OutputDir;
+
+    m_OutputDirMaven = new File(m_OutputDir.getAbsolutePath() + "/output");
+
+    return null;
+  }
+
+  /**
+   * Initializes the POM template.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  protected String initPomTemplate() {
+    String	result;
+
+    if (m_PomTemplate == null) {
+      result = Template.configureBundledTemplate(m_OutputDir, m_OutputDirMaven, m_Dependencies, !m_Sources);
+    }
+    else {
+      if (!m_PomTemplate.exists())
+	return "pom.xml template does not exist: " + m_PomTemplate;
+      if (m_PomTemplate.isDirectory())
+	return "pom.xml template points to a directory: " + m_PomTemplate;
+      result = Template.configureTemplate(m_PomTemplate, m_OutputDir, m_OutputDir, m_Dependencies, !m_Sources);
+    }
+
+    if (result == null)
+      m_ActPomTemplate = new File(m_OutputDir.getAbsolutePath() + "/pom.xml");
+
+    return result;
+  }
+
+  /**
+   * Executes maven to pull in the artifacts.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  protected String executeMaven() {
     InvocationRequest 	request;
     Invoker 		invoker;
-    List<String>	cmd;
-    ProcessBuilder 	builder;
-    Process		process;
-    int			exitCode;
 
-    // maven
-    if ((m_MavenHome == null) || m_MavenHome.isEmpty())
-      actMavenHome = "TODO";  // TODO extract and use bundled Maven
-    else
-      actMavenHome = m_MavenHome;
-    actMavenHomeDir = new File(actMavenHome);
-    if (!actMavenHomeDir.exists())
-      return "Maven home does not exist: " + actMavenHomeDir;
-    if (!actMavenHomeDir.isDirectory())
-      return "Maven home is not a directory: " + actMavenHomeDir;
-    System.setProperty("maven.home", actMavenHome);
-
-    // template
-    if ((m_PomTemplate == null) || m_PomTemplate.isEmpty())
-      actPomTemplate = "TODO"; // TODO extract from classpath
-    else
-      actPomTemplate = m_PomTemplate;
-    actPomTemplateFile = new File(actPomTemplate);
-    if (!actPomTemplateFile.exists())
-      return "pom.xml template does not exist: " + actPomTemplateFile;
-    if (actPomTemplateFile.isDirectory())
-      return "pom.xml template points to a directory: " + actPomTemplateFile;
-    // TODO replace placeholders in template
-
-    // output directory
-    outputDir = new File(m_OutputDir);
-    if (!outputDir.exists())
-      return "Output directory does not exist: " + outputDir;
-    if (!outputDir.isDirectory())
-      return "Output directory is not a directory: " + outputDir;
-
-    // bootstrap
     request = new DefaultInvocationRequest();
-    request.setPomFile(new File(actPomTemplate));
+    request.setPomFile(m_ActPomTemplate);
     request.setGoals(Arrays.asList("clean", "package"));
     invoker = new DefaultInvoker();
     try {
       invoker.execute(request);
     }
     catch (Exception e) {
-      e.printStackTrace();
+      getLogger().log(Level.SEVERE, "Failed to bootstrap the application!", e);
       return "Failed to bootstrap the application: " + e;
     }
 
-    // launch class
-    if (m_MainClass != null) {
-      if ((m_JavaHome == null) || m_JavaHome.isEmpty())
-	actJavaHome = System.getProperty("java.home");
-      else
-	actJavaHome = m_JavaHome;
-      actJavaHomeDir = new File(actJavaHome);
-      if (!actJavaHomeDir.exists())
-	return "Java home does not exist: " + actJavaHomeDir;
-      if (!actJavaHomeDir.isDirectory())
-	return "Java home is not a directory: " + actJavaHomeDir;
+    return null;
+  }
 
+  /**
+   * Generates startup scripts if a main class was supplied.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  protected String createScripts() {
+    if (m_MainClass != null) {
+      // TODO create scripts: shell/batch
+    }
+    return null;
+  }
+
+  /**
+   * Launches the main class, if provided.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  protected String launchMainClass() {
+    List<String>	cmd;
+    ProcessBuilder 	builder;
+    int			exitCode;
+
+    if (m_MainClass != null) {
       cmd = new ArrayList<>();
-      cmd.add(actJavaHomeDir + "/bin/java");
+      cmd.add(m_ActJavaHome.getAbsolutePath() + "/bin/java");
       if (m_JVM != null)
         cmd.addAll(m_JVM);
       cmd.add("-cp");
-      cmd.add(outputDir.getAbsolutePath() + "/lib/*");
+      cmd.add(m_OutputDirMaven.getAbsolutePath() + "/lib/*");
       cmd.add(m_MainClass);
       builder = new ProcessBuilder(cmd);
       try {
-	process = builder.start();
-	exitCode = process.waitFor();
+        StreamingProcessOutput output = new StreamingProcessOutput(new SimpleStreamingProcessOwner());
+	output.monitor(builder);
+	exitCode = output.getExitCode();
 	if (exitCode != 0)
 	  return "Failed to launch class (" + builder.command() + "): " + exitCode;
       }
       catch (Exception e) {
-        e.printStackTrace();
+        getLogger().log(Level.SEVERE, "Failed to launch class!", e);
         return "Failed to launch class: " + e;
       }
     }
 
     return null;
+  }
+
+  /**
+   * Performs the bootstrapping.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  protected String doExecute() {
+    String		result;
+
+    // initialize
+    m_ActMavenHome   = null;
+    m_ActJavaHome    = null;
+    m_ActPomTemplate = null;
+    if ((result = initMavenHome()) != null)
+      return result;
+    if ((result = initJavaHome()) != null)
+      return result;
+    if ((result = initOutputDir()) != null)
+      return result;
+    if ((result = initPomTemplate()) != null)
+      return result;
+
+    // bootstrap
+    if ((result = executeMaven()) != null)
+      return result;
+
+    // main class
+    if (getLaunch() && (result = createScripts()) != null)
+      return result;
+    if (getLaunch() && (result = launchMainClass()) != null)
+      return result;
+
+    return null;
+  }
+
+  /**
+   * Performs the bootstrapping.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  public String execute() {
+    String		result;
+
+    result = doExecute();
+    if (result != null)
+      getLogger().severe(result);
+
+    return result;
   }
 
   /**
