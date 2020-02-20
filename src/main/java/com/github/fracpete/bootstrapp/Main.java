@@ -34,6 +34,8 @@ import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -546,14 +548,83 @@ public class Main {
   }
 
   /**
+   * Builds and returns the launch command for the main class.
+   *
+   * @return		the command
+   */
+  protected List<String> buildLaunchCommand(String javaBinary, String libDir) {
+    List<String> 	result;
+
+    result = new ArrayList<>();
+    result.add(javaBinary);
+    if (m_JVM != null)
+      result.addAll(m_JVM);
+    result.add("-cp");
+    result.add(libDir);
+    result.add(m_MainClass);
+
+    return result;
+  }
+
+  /**
    * Generates startup scripts if a main class was supplied.
    *
    * @return		null if successful, otherwise error message
    */
   protected String createScripts() {
+    List<String>	cmd;
+    StringBuilder	script;
+    File		dir;
+    File		file;
+
     if (m_MainClass != null) {
-      // TODO create scripts: shell/batch
+      dir = new File(m_OutputDirMaven.getAbsolutePath() + "/bin");
+      if (!dir.mkdirs())
+        return "Failed to create directory for scripts: " + dir;
+
+      // shell
+      cmd = buildLaunchCommand("java", "\"$CP\"");
+      file = new File(dir.getAbsolutePath() + "/start.sh");
+      script = new StringBuilder();
+      script.append("#!/bin/bash\n");
+      script.append("#\n");
+      script.append("BASEDIR=`dirname $0`/..\n");
+      script.append("BASEDIR=`(cd \"$BASEDIR\"; pwd)`\n");
+      script.append("LIB=\"$BASEDIR\"/lib\n");
+      script.append("CP=\"$LIB/*\"\n");
+      for (String c: cmd)
+        script.append(c).append(" ");
+      script.append("\n");
+      try {
+	Files.write(file.toPath(), script.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+	file.setExecutable(true);
+      }
+      catch (Exception e) {
+        getLogger().log(Level.SEVERE, "Failed to write shell script to: " + file, e);
+        return "Failed to write shell script to '" + file + "': " + e;
+      }
+
+      // batch
+      cmd = buildLaunchCommand("java", "\"%CP%\"");
+      file = new File(dir.getAbsolutePath() + "/start.bat");
+      script = new StringBuilder();
+      script.append("@echo off\n");
+      script.append("\n");
+      script.append("set BASEDIR=%~dp0\\..\n");
+      script.append("set LIB=%BASEDIR%\\lib\n");
+      script.append("set CP=%LIB%\\*\n");
+      for (String c: cmd)
+        script.append(c).append(" ");
+      script.append("\n");
+      try {
+	Files.write(file.toPath(), script.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+      }
+      catch (Exception e) {
+        getLogger().log(Level.SEVERE, "Failed to write batch script to: " + file, e);
+        return "Failed to write batch script to '" + file + "': " + e;
+      }
     }
+
     return null;
   }
 
@@ -568,13 +639,7 @@ public class Main {
     int			exitCode;
 
     if (m_MainClass != null) {
-      cmd = new ArrayList<>();
-      cmd.add(m_ActJavaHome.getAbsolutePath() + "/bin/java");
-      if (m_JVM != null)
-        cmd.addAll(m_JVM);
-      cmd.add("-cp");
-      cmd.add(m_OutputDirMaven.getAbsolutePath() + "/lib/*");
-      cmd.add(m_MainClass);
+      cmd = buildLaunchCommand(m_ActJavaHome.getAbsolutePath() + "/bin/java", m_OutputDirMaven.getAbsolutePath() + "/lib/*");
       builder = new ProcessBuilder(cmd);
       try {
         StreamingProcessOutput output = new StreamingProcessOutput(new SimpleStreamingProcessOwner());
@@ -618,7 +683,7 @@ public class Main {
       return result;
 
     // main class
-    if (getLaunch() && (result = createScripts()) != null)
+    if (getScripts() && (result = createScripts()) != null)
       return result;
     if (getLaunch() && (result = launchMainClass()) != null)
       return result;
