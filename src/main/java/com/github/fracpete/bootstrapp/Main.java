@@ -94,6 +94,9 @@ public class Main {
   /** for logging. */
   protected Logger m_Logger;
 
+  /** whether help got requested. */
+  protected boolean m_HelpRequested;
+
   /**
    * Initializes the object.
    */
@@ -117,6 +120,7 @@ public class Main {
     m_Scripts        = false;
     m_Launch         = false;
     m_Logger         = null;
+    m_HelpRequested  = false;
   }
 
   /**
@@ -413,6 +417,15 @@ public class Main {
   }
 
   /**
+   * Returns whether help got requested when setting the options.
+   *
+   * @return		true if help got requested
+   */
+  public boolean getHelpRequested() {
+    return m_HelpRequested;
+  }
+
+  /**
    * Parses the options and configures the object.
    *
    * @param options	the command-line options
@@ -422,13 +435,15 @@ public class Main {
     ArgumentParser 	parser;
     Namespace 		ns;
 
-    parser = getParser();
+    m_HelpRequested = false;
+    parser          = getParser();
     try {
       ns = parser.parseArgs(options);
     }
     catch (ArgumentParserException e) {
       parser.handleError(e);
-      return parser.getHelpRequested();
+      m_HelpRequested = parser.getHelpRequested();
+      return m_HelpRequested;
     }
 
     return setOptions(ns);
@@ -713,10 +728,15 @@ public class Main {
    */
   public static void main(String[] args) {
     Main main = new Main();
+
     if (!main.setOptions(args)) {
       System.err.println("Failed to parse options!");
       System.exit(1);
     }
+    else if (main.getHelpRequested()) {
+      System.exit(0);
+    }
+
     String result = main.execute();
     if (result != null) {
       System.err.println("Failed to perform bootstrapping:\n" + result);
