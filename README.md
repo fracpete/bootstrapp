@@ -56,3 +56,27 @@ java com.github.fracpete.bootstrapp.Main \
   -c weka.gui.GUIChooser \
   -e
 ```
+
+The same example from within Java:
+
+```java
+import com.github.fracpete.bootstrapp.Main;
+import java.io.File;
+
+public static class TestBootstrapp {
+  
+  public static void main(String[] args) throws Exception {
+    Main main = new Main();
+    String result = main
+        .dependencies("nz.ac.waikato.cms.weka:weka-dev:3.9.4")
+        .sources(true)
+        .outputDir(new File("./out"))
+        .jvm("-Xmx1g")
+        .mainClass("weka.gui.GUIChooser")
+        .scripts(true)
+        .execute();
+    if (result != null)
+      System.err.println(result);
+  }
+}
+```
