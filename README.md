@@ -10,34 +10,34 @@ Usage: [--help] [-m MAVEN_HOME] [-j JAVA_HOME]
        [-e] [-l]
 
 Options:
--m/--maven_home MAVEN_HOME
+-m, --maven_home MAVEN_HOME
 	The directory with a local Maven installation to use instead of the bundled one.
 
--j/--java_home JAVA_HOME
+-j, --java_home JAVA_HOME
 	The Java home to use for the Maven execution.
 
--d/--dependency DEPENDENCIES
+-d, --dependency DEPENDENCIES
 	The maven dependencies to use for bootstrapping the application (group:artifact:version), e.g.: nz.ac.waikato.cms.weka:weka-dev:3.9.4
 
--s/--sources
+-s, --sources
 	If enabled, source jars of the Maven artifacts will get downloaded as well and stored in a separated directory.
 
--p/--pom_template POM_TEMPLATE
+-p, --pom_template POM_TEMPLATE
 	The alternative template for the pom.xml to use.
 
--o/--output_dir OUTPUT_DIR
+-o, --output_dir OUTPUT_DIR
 	The directory to output the bootstrapped application in.
 
--c/--main_class MAIN_CLASS
+-c, --main_class MAIN_CLASS
 	The main class to execute after bootstrapping the application.
 
--v/--jvm JVM
+-v, --jvm JVM
 	The parameters to pass to the JVM before launching the application.
 
--e/--scripts
+-e, --scripts
 	If enabled, shell/batch scripts get generated to launch the main class.
 
--l/--launch
+-l, --launch
 	If enabled, the supplied main class will get launched.
 ```
 
