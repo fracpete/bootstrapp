@@ -98,7 +98,7 @@
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>simple-argparse4j</artifactId>
-      <version>0.0.6</version>
+      <version>0.0.7</version>
     </dependency>
 
     <dependency>
@@ -224,7 +224,7 @@
               </goals>
               <configuration>
                 <classifier>spring-boot</classifier>
-                <mainClass>com.github.fracpete.bootstrap.Main</mainClass>
+                <mainClass>com.github.fracpete.bootstrapp.Main</mainClass>
               </configuration>
             </execution>
           </executions>
