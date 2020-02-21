@@ -6,8 +6,8 @@ Command-line tool for bootstrapping Maven applications just by using the depende
 
 ```
 Usage: [--help] [-m MAVEN_HOME] [-j JAVA_HOME]
-       -d DEPENDENCIES... [-s] [-p POM_TEMPLATE] -o OUTPUT_DIR [-c MAIN_CLASS] [-v JVM...]
-       [-e] [-l]
+       [-d DEPENDENCIES...] [-D DEPENDENCY_FILES...] [-s] [-p POM_TEMPLATE]
+       -o OUTPUT_DIR [-c MAIN_CLASS] [-v JVM...] [-e] [-b] [-l]
 
 Options:
 -m, --maven_home MAVEN_HOME
@@ -18,6 +18,9 @@ Options:
 
 -d, --dependency DEPENDENCIES
 	The maven dependencies to use for bootstrapping the application (group:artifact:version), e.g.: nz.ac.waikato.cms.weka:weka-dev:3.9.4
+
+-D, --dependency-file DEPENDENCY_FILES
+	The file(s) with maven dependencies to use for bootstrapping the application (group:artifact:version), one dependency per line.
 
 -s, --sources
 	If enabled, source jars of the Maven artifacts will get downloaded as well and stored in a separated directory.
@@ -36,6 +39,9 @@ Options:
 
 -e, --scripts
 	If enabled, shell/batch scripts get generated to launch the main class.
+
+-b, --spring-boot
+	If enabled, a spring-boot jar is generated utilizing the main class (single jar with all dependencies contained).
 
 -l, --launch
 	If enabled, the supplied main class will get launched.
@@ -86,6 +92,7 @@ public static class TestBootstrapp {
 Below are executable spring-boot jars for download that can be executed
 via `java -jar XYZ.jar [options]`:
 
+* [0.0.2](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.2/bootstrapp-0.0.2-spring-boot.jar)
 * [0.0.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.1/bootstrapp-0.0.1-spring-boot.jar)
 
 
@@ -95,7 +102,7 @@ via `java -jar XYZ.jar [options]`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>bootstrapp</artifactId>
-      <version>0.0.1</version>
+      <version>0.0.2</version>
     </dependency>
 ```
 
