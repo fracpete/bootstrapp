@@ -58,6 +58,9 @@ public class Main {
   /** the dependencies. */
   protected List<String> m_Dependencies;
 
+  /** the dependency files. */
+  protected List<File> m_DependencyFiles;
+
   /** the pom template. */
   protected File m_PomTemplate;
 
@@ -96,20 +99,20 @@ public class Main {
    * Initializes the members.
    */
   protected void initialize() {
-    m_MavenHome      = null;
-    m_JavaHome       = null;
-    m_OutputDir      = null;
-    m_OutputDirMaven = null;
-    m_JVM            = null;
-    m_Dependencies   = null;
-    m_MavenHome      = null;
-    m_PomTemplate    = null;
-    m_Sources        = false;
-    m_Scripts        = false;
-    m_Launch         = false;
-    m_SpringBoot     = false;
-    m_Logger         = null;
-    m_HelpRequested  = false;
+    m_MavenHome       = null;
+    m_JavaHome        = null;
+    m_OutputDir       = null;
+    m_OutputDirMaven  = null;
+    m_JVM             = null;
+    m_Dependencies    = null;
+    m_DependencyFiles = null;
+    m_PomTemplate     = null;
+    m_Sources         = false;
+    m_Scripts         = false;
+    m_Launch          = false;
+    m_SpringBoot      = false;
+    m_Logger          = null;
+    m_HelpRequested   = false;
   }
 
   /**
@@ -186,23 +189,23 @@ public class Main {
   /**
    * Sets the dependencies to use for bootstrapping.
    *
-   * @param options	the dependencies, can be null
+   * @param dependencies	the dependencies, can be null
    * @return		itself
    */
-  public Main dependencies(List<String> options) {
-    m_Dependencies = options;
+  public Main dependencies(List<String> dependencies) {
+    m_Dependencies = dependencies;
     return this;
   }
 
   /**
    * Sets the dependencies to use for bootstrapping.
    *
-   * @param options	the dependencies, can be null
+   * @param dependencies	the dependencies, can be null
    * @return		itself
    */
-  public Main dependencies(String... options) {
-    if (options != null)
-      m_Dependencies = new ArrayList<>(Arrays.asList(options));
+  public Main dependencies(String... dependencies) {
+    if (dependencies != null)
+      m_Dependencies = new ArrayList<>(Arrays.asList(dependencies));
     else
       m_Dependencies = null;
     return this;
@@ -215,6 +218,76 @@ public class Main {
    */
   public List<String> getDependencies() {
     return m_Dependencies;
+  }
+
+  /**
+   * Sets the dependency files to use for bootstrapping (one dependency per line).
+   *
+   * @param files	the dependencies, can be null
+   * @return		itself
+   */
+  public Main dependencyFiles(List<File> files) {
+    m_DependencyFiles = files;
+    return this;
+  }
+
+  /**
+   * Sets the dependency files to use for bootstrapping (one dependency per line).
+   *
+   * @param files	the dependency files, can be null
+   * @return		itself
+   */
+  public Main dependencyFiles(File... files) {
+    if (files != null)
+      m_DependencyFiles = new ArrayList<>(Arrays.asList(files));
+    else
+      m_DependencyFiles = null;
+    return this;
+  }
+
+  /**
+   * Returns the dependency files.
+   *
+   * @return		the files, can be null
+   */
+  public List<File> getDependencyFiles() {
+    return m_DependencyFiles;
+  }
+
+  /**
+   * Combines manually set dependencies and ones from files into one list.
+   *
+   * @return		all dependencies
+   */
+  public List<String> getAllDependencies() {
+    List<String>	result;
+    List<String> 	lines;
+
+    result = new ArrayList<>();
+    if (m_Dependencies != null)
+      result.addAll(m_Dependencies);
+
+    if (m_DependencyFiles != null) {
+      for (File depFile: m_DependencyFiles) {
+        try {
+          getLogger().info("Reading dependency file: " + depFile);
+          lines = Files.readAllLines(depFile.toPath());
+          for (String line: lines) {
+            line = line.trim();
+            if (line.isEmpty())
+              continue;
+            if (!line.contains(":"))
+              continue;
+            result.add(line);
+	  }
+	}
+	catch (Exception e) {
+          getLogger().log(Level.SEVERE, "Failed to read dependency file: " + depFile, e);
+	}
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -391,10 +464,16 @@ public class Main {
       .dest("java_home")
       .help("The Java home to use for the Maven execution.");
     parser.addOption("-d", "--dependency")
-      .required(true)
+      .required(false)
       .multiple(true)
       .dest("dependencies")
       .help("The maven dependencies to use for bootstrapping the application (group:artifact:version), e.g.: nz.ac.waikato.cms.weka:weka-dev:3.9.4");
+    parser.addOption("-D", "--dependency-file")
+      .required(false)
+      .multiple(true)
+      .type(Type.EXISTING_FILE)
+      .dest("dependency_files")
+      .help("The file(s) with maven dependencies to use for bootstrapping the application (group:artifact:version), one dependency per line.");
     parser.addOption("-s", "--sources")
       .type(Type.BOOLEAN)
       .setDefault(false)
@@ -450,6 +529,7 @@ public class Main {
     outputDir(ns.getFile("output_dir"));
     jvm(ns.getList("jvm"));
     dependencies(ns.getList("dependencies"));
+    dependencyFiles(ns.getList("dependency_files"));
     sources(ns.getBoolean("sources"));
     pomTemplate(ns.getFile("pom_template"));
     mainClass(ns.getString("main_class"));
@@ -565,14 +645,14 @@ public class Main {
     String	result;
 
     if (m_PomTemplate == null) {
-      result = Template.configureBundledTemplate(m_OutputDir, m_OutputDirMaven, m_Dependencies, !m_Sources, !m_SpringBoot, m_MainClass);
+      result = Template.configureBundledTemplate(m_OutputDir, m_OutputDirMaven, getAllDependencies(), !m_Sources, !m_SpringBoot, m_MainClass);
     }
     else {
       if (!m_PomTemplate.exists())
 	return "pom.xml template does not exist: " + m_PomTemplate;
       if (m_PomTemplate.isDirectory())
 	return "pom.xml template points to a directory: " + m_PomTemplate;
-      result = Template.configureTemplate(m_PomTemplate, m_OutputDir, m_OutputDir, m_Dependencies, !m_Sources, !m_SpringBoot, m_MainClass);
+      result = Template.configureTemplate(m_PomTemplate, m_OutputDir, m_OutputDir, getAllDependencies(), !m_Sources, !m_SpringBoot, m_MainClass);
     }
 
     if (result == null)
