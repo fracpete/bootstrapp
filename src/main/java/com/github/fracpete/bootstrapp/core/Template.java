@@ -59,7 +59,7 @@ public class Template {
     File	file;
 
     try {
-      path = Resources.copyResourceTo(Resources.LOCATION, TEMPLATE_FILE, System.getProperty("java.io.tmpdir"));
+      path = com.github.fracpete.resourceextractor4j.Files.extractTo(Resources.LOCATION, TEMPLATE_FILE, System.getProperty("java.io.tmpdir"));
       result = configureTemplate(new File(path), outputDir, outputDirMaven, dependencies, noSources, noSpringBoot, mainClass);
       file = new File(path);
       if (file.exists())

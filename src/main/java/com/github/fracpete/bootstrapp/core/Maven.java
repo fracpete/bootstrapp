@@ -5,6 +5,8 @@
 
 package com.github.fracpete.bootstrapp.core;
 
+import com.github.fracpete.resourceextractor4j.Content;
+import com.github.fracpete.resourceextractor4j.Files;
 import org.apache.commons.lang.SystemUtils;
 
 import java.io.File;
@@ -49,8 +51,8 @@ public class Maven {
     List<String> 	lines;
 
     if (VERSION == null) {
-      lines = Resources.readLines(Resources.LOCATION + "/" + VERSION_FILE);
-      if (lines.size() > 0)
+      lines = Content.readLines(Resources.LOCATION + "/" + VERSION_FILE);
+      if ((lines != null) && (lines.size() > 0))
         VERSION = lines.get(0);
       else
         VERSION = "unknown";
@@ -89,6 +91,7 @@ public class Maven {
    */
   public static String initBundledMaven() {
     File 		dir;
+    String		res;
     List<String>	lines;
     String		inDir;
     String		name;
@@ -108,7 +111,10 @@ public class Maven {
     home = homeDir();
 
     // copy files
-    lines = Resources.readLines(Resources.LOCATION + "/" + BUNDLEDFILES_FILE);
+    res = Resources.LOCATION + "/" + BUNDLEDFILES_FILE;
+    lines = Content.readLines(res);
+    if (lines == null)
+      return "Failed to read bundled files from: " + res;
     for (String line: lines) {
       file  = new File(line);
       inDir = file.getParent();
@@ -117,7 +123,7 @@ public class Maven {
         outDir = new File(home + "/" + (inDir == null ? "" : inDir));
         if (!outDir.exists())
           outDir.mkdirs();
-	Resources.copyResourceTo(LOCATION + "/" + (inDir == null ? "" : inDir), name, outDir.getAbsolutePath());
+	Files.extractTo(LOCATION + "/" + (inDir == null ? "" : inDir), name, outDir.getAbsolutePath());
       }
       catch (Exception e) {
         LOGGER.log(Level.SEVERE, "Failed to copy '" + line + "' to '" + home + "'!", e);
@@ -127,7 +133,10 @@ public class Maven {
 
     // set executable flags
     if (!SystemUtils.IS_OS_WINDOWS) {
-      lines = Resources.readLines(Resources.LOCATION + "/" + EXECUTABLES_FILE);
+      res = Resources.LOCATION + "/" + EXECUTABLES_FILE;
+      lines = Content.readLines(res);
+      if (lines == null)
+        return "Failed to read executable files from: " + res;
       for (String line : lines) {
 	file = new File(home + "/" + line);
 	file.setExecutable(true);
