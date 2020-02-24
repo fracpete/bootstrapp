@@ -5,13 +5,16 @@ Command-line tool for bootstrapping Maven applications just by using the depende
 ## Command-line options
 
 ```
-Usage: [--help] [-m MAVEN_HOME] [-j JAVA_HOME]
-       [-d DEPENDENCIES...] [-D DEPENDENCY_FILES...] [-s] [-p POM_TEMPLATE]
-       -o OUTPUT_DIR [-c MAIN_CLASS] [-v JVM...] [-e] [-b] [-l]
+Usage: [--help] [-m MAVEN_HOME]
+       [-u MAVEN_USER_SETTINGS] [-j JAVA_HOME] [-d DEPENDENCIES...] [-D DEPENDENCY_FILES...] [-s]
+       [-p POM_TEMPLATE] -o OUTPUT_DIR [-c MAIN_CLASS] [-v JVM...] [-e] [-b] [-l]
 
 Options:
 -m, --maven_home MAVEN_HOME
 	The directory with a local Maven installation to use instead of the bundled one.
+
+-u, --maven_user_settings MAVEN_USER_SETTINGS
+	The file with the maven user settings to use other than $HOME/.m2/settings.xml.
 
 -j, --java_home JAVA_HOME
 	The Java home to use for the Maven execution.
@@ -92,6 +95,7 @@ public static class TestBootstrapp {
 Below are executable spring-boot jars for download that can be executed
 via `java -jar XYZ.jar [options]`:
 
+* [0.0.3](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.3/bootstrapp-0.0.3-spring-boot.jar)
 * [0.0.2](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.2/bootstrapp-0.0.2-spring-boot.jar)
 * [0.0.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.1/bootstrapp-0.0.1-spring-boot.jar)
 
@@ -102,7 +106,7 @@ via `java -jar XYZ.jar [options]`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>bootstrapp</artifactId>
-      <version>0.0.2</version>
+      <version>0.0.3</version>
     </dependency>
 ```
 
