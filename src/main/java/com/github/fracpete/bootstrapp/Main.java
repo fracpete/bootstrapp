@@ -40,6 +40,9 @@ public class Main {
   /** the actual maven home to use. */
   protected transient File m_ActMavenHome;
 
+  /** the maven user settings to use. */
+  protected File m_MavenUserSettings;
+
   /** the alternative java installation. */
   protected File m_JavaHome;
 
@@ -99,20 +102,21 @@ public class Main {
    * Initializes the members.
    */
   protected void initialize() {
-    m_MavenHome       = null;
-    m_JavaHome        = null;
-    m_OutputDir       = null;
-    m_OutputDirMaven  = null;
-    m_JVM             = null;
-    m_Dependencies    = null;
-    m_DependencyFiles = null;
-    m_PomTemplate     = null;
-    m_Sources         = false;
-    m_Scripts         = false;
-    m_Launch          = false;
-    m_SpringBoot      = false;
-    m_Logger          = null;
-    m_HelpRequested   = false;
+    m_MavenHome         = null;
+    m_MavenUserSettings = null;
+    m_JavaHome          = null;
+    m_OutputDir         = null;
+    m_OutputDirMaven    = null;
+    m_JVM               = null;
+    m_Dependencies      = null;
+    m_DependencyFiles   = null;
+    m_PomTemplate       = null;
+    m_Sources           = false;
+    m_Scripts           = false;
+    m_Launch            = false;
+    m_SpringBoot        = false;
+    m_Logger            = null;
+    m_HelpRequested     = false;
   }
 
   /**
@@ -144,6 +148,26 @@ public class Main {
    */
   public File getMavenHome() {
     return m_MavenHome;
+  }
+
+  /**
+   * Sets the alternative maven user settings to use.
+   *
+   * @param dir		the XML file, null to use default ($HOME/.m2/settings.xml)
+   * @return		itself
+   */
+  public Main mavenUserSettings(File dir) {
+    m_MavenUserSettings = dir;
+    return this;
+  }
+
+  /**
+   * Returns the alternative maven user settings to use.
+   *
+   * @return		the file, null to use default ($HOME/.m2/settings.xml)
+   */
+  public File getMavenUserSettings() {
+    return m_MavenUserSettings;
   }
 
   /**
@@ -458,6 +482,11 @@ public class Main {
       .type(Type.EXISTING_DIR)
       .dest("maven_home")
       .help("The directory with a local Maven installation to use instead of the bundled one.");
+    parser.addOption("-u", "--maven_user_settings")
+      .required(false)
+      .type(Type.EXISTING_FILE)
+      .dest("maven_user_settings")
+      .help("The file with the maven user settings to use other than $HOME/.m2/settings.xml.");
     parser.addOption("-j", "--java_home")
       .required(false)
       .type(Type.EXISTING_DIR)
@@ -525,6 +554,7 @@ public class Main {
    */
   protected boolean setOptions(Namespace ns) {
     mavenHome(ns.getFile("maven_home"));
+    mavenUserSettings(ns.getFile("maven_user_settings"));
     javaHome(ns.getFile("java_home"));
     outputDir(ns.getFile("output_dir"));
     jvm(ns.getList("jvm"));
@@ -605,16 +635,14 @@ public class Main {
    * @see		#m_JavaHome
    */
   protected String initJavaHome() {
-    if (m_MainClass != null) {
-      if (m_JavaHome == null)
-	m_ActJavaHome = new File(System.getProperty("java.home"));
-      else
-	m_ActJavaHome = m_JavaHome;
-      if (!m_ActJavaHome.exists())
-	return "Java home does not exist: " + m_ActJavaHome;
-      if (!m_ActJavaHome.isDirectory())
-	return "Java home is not a directory: " + m_ActJavaHome;
-    }
+    if (m_JavaHome == null)
+      m_ActJavaHome = new File(System.getProperty("java.home"));
+    else
+      m_ActJavaHome = m_JavaHome;
+    if (!m_ActJavaHome.exists())
+      return "Java home does not exist: " + m_ActJavaHome;
+    if (!m_ActJavaHome.isDirectory())
+      return "Java home is not a directory: " + m_ActJavaHome;
     return null;
   }
 
@@ -673,7 +701,11 @@ public class Main {
     request = new DefaultInvocationRequest();
     request.setPomFile(m_ActPomTemplate);
     request.setGoals(Arrays.asList("clean", "package"));
+    request.setJavaHome(m_ActJavaHome);
+    if (m_MavenUserSettings != null)
+      request.setUserSettingsFile(m_MavenUserSettings);
     invoker = new DefaultInvoker();
+    invoker.setMavenHome(m_ActMavenHome);
     try {
       invoker.execute(request);
     }
