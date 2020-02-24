@@ -476,7 +476,7 @@ public class Main {
   protected ArgumentParser getParser() {
     ArgumentParser 		parser;
 
-    parser = new ArgumentParser("");
+    parser = new ArgumentParser("Bootstrapping Maven applications by supplying only dependencies.");
     parser.addOption("-m", "--maven_home")
       .required(false)
       .type(Type.EXISTING_DIR)
