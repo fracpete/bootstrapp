@@ -231,6 +231,7 @@
             <configuration>
               <classifier>spring-boot</classifier>
               <mainClass>com.github.fracpete.bootstrapp.Main</mainClass>
+              <attach>false</attach>
             </configuration>
           </execution>
         </executions>
