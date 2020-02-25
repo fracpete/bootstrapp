@@ -67,6 +67,7 @@
               <classifier>spring-boot</classifier>
               <mainClass><!-- mainclass --></mainClass>
               <skip><!-- nospringboot --></skip>
+              <attach>false</attach>
             </configuration>
           </execution>
         </executions>
