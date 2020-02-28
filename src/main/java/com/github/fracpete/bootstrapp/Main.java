@@ -71,6 +71,12 @@ public class Main {
   /** the actual POM template to use. */
   protected transient File m_ActPomTemplate;
 
+  /** the name of the projet. */
+  protected String m_Name;
+
+  /** the version of the project. */
+  protected String m_Version;
+
   /** whether to call the "clean" goal. */
   protected boolean m_Clean;
 
@@ -115,6 +121,8 @@ public class Main {
     m_Dependencies      = null;
     m_DependencyFiles   = null;
     m_PomTemplate       = null;
+    m_Name              = Template.DEFAULT_NAME;
+    m_Version           = Template.DEFAULT_VERSION;
     m_Clean             = false;
     m_Sources           = false;
     m_Scripts           = false;
@@ -213,6 +221,46 @@ public class Main {
    */
   public File getOutputDir() {
     return m_OutputDir;
+  }
+
+  /**
+   * Sets the name for the project.
+   *
+   * @param name	the name
+   * @return		itself
+   */
+  public Main name(String name) {
+    m_Name = name;
+    return this;
+  }
+
+  /**
+   * Returns the name for the project.
+   *
+   * @return		the name
+   */
+  public String getName() {
+    return m_Name;
+  }
+
+  /**
+   * Sets the version of the project.
+   *
+   * @param version	the version
+   * @return		itself
+   */
+  public Main version(String version) {
+    m_Version = version;
+    return this;
+  }
+
+  /**
+   * Returns the version of the project.
+   *
+   * @return		the version
+   */
+  public String getVersion() {
+    return m_Version;
   }
 
   /**
@@ -517,6 +565,16 @@ public class Main {
       .type(Type.EXISTING_DIR)
       .dest("java_home")
       .help("The Java home to use for the Maven execution.");
+    parser.addOption("-n", "--name")
+      .required(false)
+      .setDefault(Template.DEFAULT_NAME)
+      .dest("name")
+      .help("The name to use for the project in the pom.xml");
+    parser.addOption("-V", "--version")
+      .required(false)
+      .setDefault(Template.DEFAULT_VERSION)
+      .dest("version")
+      .help("The version to use for the project in the pom.xml");
     parser.addOption("-d", "--dependency")
       .required(false)
       .multiple(true)
@@ -588,6 +646,8 @@ public class Main {
     javaHome(ns.getFile("java_home"));
     outputDir(ns.getFile("output_dir"));
     jvm(ns.getList("jvm"));
+    name(ns.getString("name"));
+    version(ns.getString("version"));
     dependencies(ns.getList("dependencies"));
     dependencyFiles(ns.getList("dependency_files"));
     clean(ns.getBoolean("clean"));
@@ -710,6 +770,8 @@ public class Main {
     config.noSources      = !m_Sources;
     config.noSpringBoot   = !m_SpringBoot;
     config.mainClass      = m_MainClass;
+    config.name           = m_Name;
+    config.version        = m_Version;
 
     if (m_PomTemplate == null) {
       result = Template.configureBundledTemplate(m_OutputDir, config);
@@ -804,6 +866,8 @@ public class Main {
       script = new StringBuilder();
       script.append("#!/bin/bash\n");
       script.append("#\n");
+      script.append("# " + m_Name + "\n");
+      script.append("#\n");
       script.append("BASEDIR=`dirname $0`/..\n");
       script.append("BASEDIR=`(cd \"$BASEDIR\"; pwd)`\n");
       script.append("LIB=\"$BASEDIR\"/lib\n");
@@ -846,6 +910,8 @@ public class Main {
       file = new File(dir.getAbsolutePath() + "/start.bat");
       script = new StringBuilder();
       script.append("@echo off\n");
+      script.append("\n");
+      script.append("REM " + m_Name + "\n");
       script.append("\n");
       script.append("set BASEDIR=%~dp0\\..\n");
       script.append("set LIB=%BASEDIR%\\lib\n");

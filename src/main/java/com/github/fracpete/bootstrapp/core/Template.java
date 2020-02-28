@@ -39,6 +39,18 @@ public class Template {
   /** the placeholder in the template POM for the packaging (string, pom/jar). */
   public final static String PH_PACKAGING = "<!-- packaging -->";
 
+  /** the placeholder in the template POM for the project name. */
+  public final static String PH_NAME = "<!-- name -->";
+
+  /** the placeholder in the template POM for the version. */
+  public final static String PH_VERSION = "<!-- version -->";
+
+  /** the default name. */
+  public final static String DEFAULT_NAME = "bootstrapp-harness";
+
+  /** the default version. */
+  public final static String DEFAULT_VERSION = "0.0.1";
+
   /** for logging. */
   protected static Logger LOGGER = Logger.getLogger(Template.class.getName());
 
@@ -61,6 +73,12 @@ public class Template {
 
     /** the main class, can be null. */
     public String mainClass;
+
+    /** the name of the project. */
+    public String name;
+
+    /** the version of the project. */
+    public String version;
   }
 
   /**
@@ -132,6 +150,8 @@ public class Template {
       for (i = 0; i < lines.size(); i++) {
         if (lines.get(i).contains("<!-- ")) {
           line = lines.get(i);
+          line = line.replace(PH_NAME, config.name);
+          line = line.replace(PH_VERSION, config.version);
           line = line.replace(PH_DEPENDENCIES, depsStr);
           line = line.replace(PH_OUTPUTDIR, config.outputDirMaven.getAbsolutePath());
           line = line.replace(PH_NOSOURCES, "" + config.noSources);

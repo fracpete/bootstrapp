@@ -4,8 +4,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.github.fracpete</groupId>
-  <artifactId>bootstrapp-harness</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <artifactId><!-- name --></artifactId>
+  <version><!-- version --></version>
   <packaging><!-- packaging --></packaging>
 
   <parent>
@@ -14,7 +14,7 @@
     <version>7</version>
   </parent>
 
-  <name>bootstrapp-harness</name>
+  <name><!-- name --></name>
 
 <!-- dependencies -->
 
