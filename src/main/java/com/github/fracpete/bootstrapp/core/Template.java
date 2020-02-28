@@ -43,24 +43,41 @@ public class Template {
   protected static Logger LOGGER = Logger.getLogger(Template.class.getName());
 
   /**
+   * The configuration to use for customizing the template.
+   */
+  public static class Configuration {
+
+    /** the maven output directory. */
+    public File outputDirMaven;
+
+    /** the dependencies to use (group:artifact:version). */
+    public List<String> dependencies;
+
+    /** whether to skip downloading sources. */
+    public boolean noSources;
+
+    /** whether to skip generating spring boot jar. */
+    public boolean noSpringBoot;
+
+    /** the main class, can be null. */
+    public String mainClass;
+  }
+
+  /**
    * Configures the bundled template.
    *
    * @param outputDir		the directory to copy the template to (as pom.xml)
-   * @param outputDirMaven 	the output directory to use by the maven build
-   * @param dependencies	the list of artifacts to bootstrap with
-   * @param noSources		whether to skip downloading sources
-   * @param noSpringBoot 	whether to skip generating a spring-boot jar
-   * @param mainClass 		the main class to use
+   * @param config 		the configuration
    * @return			null if successful, otherwise error message
    */
-  public static String configureBundledTemplate(File outputDir, File outputDirMaven, List<String> dependencies, boolean noSources, boolean noSpringBoot, String mainClass) {
+  public static String configureBundledTemplate(File outputDir, Configuration config) {
     String	result;
     String	path;
     File	file;
 
     try {
       path = com.github.fracpete.resourceextractor4j.Files.extractTo(Resources.LOCATION, TEMPLATE_FILE, System.getProperty("java.io.tmpdir"));
-      result = configureTemplate(new File(path), outputDir, outputDirMaven, dependencies, noSources, noSpringBoot, mainClass);
+      result = configureTemplate(new File(path), outputDir, config);
       file = new File(path);
       if (file.exists())
         file.delete();
@@ -76,14 +93,10 @@ public class Template {
    *
    * @param template 		the template file to configure
    * @param outputDir		the directory to copy the template to (as pom.xml)
-   * @param outputDirMaven 	the output directory to use by the maven build
-   * @param dependencies	the list of artifacts to bootstrap with
-   * @param noSources		whether to skip downloading sources
-   * @param noSpringBoot 	whether to skip generating a spring-boot jar
-   * @param mainClass 		the main class to use
+   * @param config 		the configuration
    * @return			null if successful, otherwise error message
    */
-  public static String configureTemplate(File template, File outputDir, File outputDirMaven, List<String> dependencies, boolean noSources, boolean noSpringBoot, String mainClass) {
+  public static String configureTemplate(File template, File outputDir, Configuration config) {
     List<String>	lines;
     int			i;
     String		line;
@@ -95,7 +108,7 @@ public class Template {
     // build dependency string
     deps = new StringBuilder();
     deps.append("  <dependencies>\n");
-    for (String dependency: dependencies) {
+    for (String dependency: config.dependencies) {
       parts = dependency.split(":");
       if (parts.length == 3) {
 	deps.append("    <dependency>\n");
@@ -110,7 +123,7 @@ public class Template {
     }
     deps.append("  </dependencies>\n");
     depsStr = deps.toString();
-    if (dependencies.size() == 0)
+    if (config.dependencies.size() == 0)
       LOGGER.warning("No dependencies supplied!");
 
     try {
@@ -120,12 +133,12 @@ public class Template {
         if (lines.get(i).contains("<!-- ")) {
           line = lines.get(i);
           line = line.replace(PH_DEPENDENCIES, depsStr);
-          line = line.replace(PH_OUTPUTDIR, outputDirMaven.getAbsolutePath());
-          line = line.replace(PH_NOSOURCES, "" + noSources);
-          line = line.replace(PH_NOSPRINGBOOT, "" + noSpringBoot);
-          line = line.replace(PH_PACKAGING, noSpringBoot ? "pom" : "jar");
-          if (mainClass != null)
-	    line = line.replace(PH_MAINCLASS, "" + mainClass);
+          line = line.replace(PH_OUTPUTDIR, config.outputDirMaven.getAbsolutePath());
+          line = line.replace(PH_NOSOURCES, "" + config.noSources);
+          line = line.replace(PH_NOSPRINGBOOT, "" + config.noSpringBoot);
+          line = line.replace(PH_PACKAGING, config.noSpringBoot ? "pom" : "jar");
+          if (config.mainClass != null)
+	    line = line.replace(PH_MAINCLASS, "" + config.mainClass);
           if (!lines.get(i).equals(line)) {
 	    lines.set(i, line);
 	    modified = true;

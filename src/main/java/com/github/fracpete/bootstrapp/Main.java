@@ -7,6 +7,7 @@ package com.github.fracpete.bootstrapp;
 
 import com.github.fracpete.bootstrapp.core.Maven;
 import com.github.fracpete.bootstrapp.core.Template;
+import com.github.fracpete.bootstrapp.core.Template.Configuration;
 import com.github.fracpete.processoutput4j.core.impl.SimpleStreamingProcessOwner;
 import com.github.fracpete.processoutput4j.output.StreamingProcessOutput;
 import com.github.fracpete.simpleargparse4j.ArgumentParser;
@@ -700,17 +701,25 @@ public class Main {
    * @return		null if successful, otherwise error message
    */
   protected String initPomTemplate() {
-    String	result;
+    String		result;
+    Configuration	config;
+
+    config = new Configuration();
+    config.outputDirMaven = m_OutputDirMaven;
+    config.dependencies   = getAllDependencies();
+    config.noSources      = !m_Sources;
+    config.noSpringBoot   = !m_SpringBoot;
+    config.mainClass      = m_MainClass;
 
     if (m_PomTemplate == null) {
-      result = Template.configureBundledTemplate(m_OutputDir, m_OutputDirMaven, getAllDependencies(), !m_Sources, !m_SpringBoot, m_MainClass);
+      result = Template.configureBundledTemplate(m_OutputDir, config);
     }
     else {
       if (!m_PomTemplate.exists())
 	return "pom.xml template does not exist: " + m_PomTemplate;
       if (m_PomTemplate.isDirectory())
 	return "pom.xml template points to a directory: " + m_PomTemplate;
-      result = Template.configureTemplate(m_PomTemplate, m_OutputDir, m_OutputDir, getAllDependencies(), !m_Sources, !m_SpringBoot, m_MainClass);
+      result = Template.configureTemplate(m_PomTemplate, m_OutputDir, config);
     }
 
     if (result == null)
@@ -785,8 +794,10 @@ public class Main {
 
     if (m_MainClass != null) {
       dir = new File(m_OutputDirMaven.getAbsolutePath() + "/bin");
-      if (!dir.mkdirs())
-        return "Failed to create directory for scripts: " + dir;
+      if (!dir.exists()) {
+	if (!dir.mkdirs())
+	  return "Failed to create directory for shell script: " + dir;
+      }
 
       cmd = buildLaunchCommand("java", "\"$CP\"");
       file = new File(dir.getAbsolutePath() + "/start.sh");
@@ -826,8 +837,10 @@ public class Main {
 
     if (m_MainClass != null) {
       dir = new File(m_OutputDirMaven.getAbsolutePath() + "/bin");
-      if (!dir.mkdirs())
-        return "Failed to create directory for scripts: " + dir;
+      if (!dir.exists()) {
+	if (!dir.mkdirs())
+	  return "Failed to create directory for batch script: " + dir;
+      }
 
       cmd = buildLaunchCommand("java", "\"%CP%\"");
       file = new File(dir.getAbsolutePath() + "/start.bat");
