@@ -773,11 +773,11 @@ public class Main {
   }
 
   /**
-   * Generates startup scripts if a main class was supplied.
+   * Generates startup shell script if a main class was supplied.
    *
    * @return		null if successful, otherwise error message
    */
-  protected String createScripts() {
+  protected String createShellScript() {
     List<String>	cmd;
     StringBuilder	script;
     File		dir;
@@ -788,7 +788,6 @@ public class Main {
       if (!dir.mkdirs())
         return "Failed to create directory for scripts: " + dir;
 
-      // shell
       cmd = buildLaunchCommand("java", "\"$CP\"");
       file = new File(dir.getAbsolutePath() + "/start.sh");
       script = new StringBuilder();
@@ -809,8 +808,27 @@ public class Main {
         getLogger().log(Level.SEVERE, "Failed to write shell script to: " + file, e);
         return "Failed to write shell script to '" + file + "': " + e;
       }
+    }
 
-      // batch
+    return null;
+  }
+
+  /**
+   * Generates startup batch script if a main class was supplied.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  protected String createBatchScript() {
+    List<String>	cmd;
+    StringBuilder	script;
+    File		dir;
+    File		file;
+
+    if (m_MainClass != null) {
+      dir = new File(m_OutputDirMaven.getAbsolutePath() + "/bin");
+      if (!dir.mkdirs())
+        return "Failed to create directory for scripts: " + dir;
+
       cmd = buildLaunchCommand("java", "\"%CP%\"");
       file = new File(dir.getAbsolutePath() + "/start.bat");
       script = new StringBuilder();
@@ -830,6 +848,24 @@ public class Main {
         return "Failed to write batch script to '" + file + "': " + e;
       }
     }
+
+    return null;
+  }
+
+  /**
+   * Generates startup scripts if a main class was supplied.
+   *
+   * @return		null if successful, otherwise error message
+   * @see		#createShellScript()
+   * @see		#createBatchScript()
+   */
+  protected String createScripts() {
+    String	result;
+
+    if ((result = createShellScript()) != null)
+      return result;
+    if ((result = createBatchScript()) != null)
+      return result;
 
     return null;
   }
