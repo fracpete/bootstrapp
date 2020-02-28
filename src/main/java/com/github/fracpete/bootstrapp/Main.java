@@ -70,6 +70,9 @@ public class Main {
   /** the actual POM template to use. */
   protected transient File m_ActPomTemplate;
 
+  /** whether to call the "clean" goal. */
+  protected boolean m_Clean;
+
   /** the main class to launch. */
   protected String m_MainClass;
 
@@ -111,6 +114,7 @@ public class Main {
     m_Dependencies      = null;
     m_DependencyFiles   = null;
     m_PomTemplate       = null;
+    m_Clean             = false;
     m_Sources           = false;
     m_Scripts           = false;
     m_Launch            = false;
@@ -315,6 +319,26 @@ public class Main {
   }
 
   /**
+   * Sets whether to execute the "clean" goal.
+   *
+   * @param clean	true if to clean
+   * @return		itself
+   */
+  public Main clean(boolean clean) {
+    m_Clean = clean;
+    return this;
+  }
+
+  /**
+   * Returns whether to execute the "clean" goal.
+   *
+   * @return		true if to clean
+   */
+  public boolean getClean() {
+    return m_Clean;
+  }
+
+  /**
    * Sets whether to retrieve the source jars as well.
    *
    * @param sources	true if to get sources
@@ -503,6 +527,11 @@ public class Main {
       .type(Type.EXISTING_FILE)
       .dest("dependency_files")
       .help("The file(s) with maven dependencies to use for bootstrapping the application (group:artifact:version), one dependency per line.");
+    parser.addOption("-C", "--clean")
+      .type(Type.BOOLEAN)
+      .setDefault(false)
+      .dest("clean")
+      .help("If enabled, the 'clean' goals gets executed.");
     parser.addOption("-s", "--sources")
       .type(Type.BOOLEAN)
       .setDefault(false)
@@ -560,6 +589,7 @@ public class Main {
     jvm(ns.getList("jvm"));
     dependencies(ns.getList("dependencies"));
     dependencyFiles(ns.getList("dependency_files"));
+    clean(ns.getBoolean("clean"));
     sources(ns.getBoolean("sources"));
     pomTemplate(ns.getFile("pom_template"));
     mainClass(ns.getString("main_class"));
@@ -697,10 +727,16 @@ public class Main {
   protected String executeMaven() {
     InvocationRequest 	request;
     Invoker 		invoker;
+    List<String>	goals;
+
+    goals = new ArrayList<>();
+    if (m_Clean)
+      goals.add("clean");
+    goals.add("package");
 
     request = new DefaultInvocationRequest();
     request.setPomFile(m_ActPomTemplate);
-    request.setGoals(Arrays.asList("clean", "package"));
+    request.setGoals(goals);
     request.setJavaHome(m_ActJavaHome);
     if (m_MavenUserSettings != null)
       request.setUserSettingsFile(m_MavenUserSettings);
