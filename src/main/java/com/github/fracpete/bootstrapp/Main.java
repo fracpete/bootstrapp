@@ -157,7 +157,7 @@ public class Main {
   /**
    * Returns the alternative maven installation to use.
    *
-   * @return		the directory, null to use bundled one
+   * @return		the directory, null to use downloaded one
    */
   public File getMavenHome() {
     return m_MavenHome;
@@ -554,7 +554,7 @@ public class Main {
       .required(false)
       .type(Type.EXISTING_DIR)
       .dest("maven_home")
-      .help("The directory with a local Maven installation to use instead of the bundled one.");
+      .help("The directory with a local Maven installation to use instead of the downloaded one.");
     parser.addOption("-u", "--maven_user_settings")
       .required(false)
       .type(Type.EXISTING_FILE)
@@ -703,7 +703,7 @@ public class Main {
     String	result;
 
     if (m_MavenHome == null) {
-      if ((result = Maven.initBundledMaven()) != null)
+      if ((result = Maven.initRemoteMaven()) != null)
         return result;
       m_ActMavenHome = new File(Maven.homeDir());
     }
@@ -866,7 +866,7 @@ public class Main {
       script = new StringBuilder();
       script.append("#!/bin/bash\n");
       script.append("#\n");
-      script.append("# " + m_Name + "\n");
+      script.append("# Start script for " + m_Name + "\n");
       script.append("#\n");
       script.append("BASEDIR=`dirname $0`/..\n");
       script.append("BASEDIR=`(cd \"$BASEDIR\"; pwd)`\n");
@@ -911,7 +911,7 @@ public class Main {
       script = new StringBuilder();
       script.append("@echo off\n");
       script.append("\n");
-      script.append("REM " + m_Name + "\n");
+      script.append("REM Start script for " + m_Name + "\n");
       script.append("\n");
       script.append("set BASEDIR=%~dp0\\..\n");
       script.append("set LIB=%BASEDIR%\\lib\n");
