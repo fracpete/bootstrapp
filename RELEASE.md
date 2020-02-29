@@ -15,5 +15,6 @@ How to make a release
 
 * Update documentation
 
+  * update --help output in README.md
   * add new release link
   * update artifact version
