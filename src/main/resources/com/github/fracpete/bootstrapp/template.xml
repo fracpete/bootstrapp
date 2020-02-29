@@ -72,6 +72,9 @@
           </execution>
         </executions>
       </plugin>
+
+<!-- buildplugins -->
+
     </plugins>
   </build>
 </project>

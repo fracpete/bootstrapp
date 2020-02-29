@@ -21,6 +21,12 @@ public class Template {
   /** the resource location of the POM template. */
   public final static String TEMPLATE_FILE = "template.xml";
 
+  /** the debian build plugin file. */
+  public final static String DEBIANBUILD_FILE = "debian.build";
+
+  /** the redhat build plugin file. */
+  public final static String REDHATBUILD_FILE = "redhat.build";
+
   /** the placeholder in the template POM for the dependencies (full dependencies tag). */
   public final static String PH_DEPENDENCIES = "<!-- dependencies -->";
 
@@ -44,6 +50,9 @@ public class Template {
 
   /** the placeholder in the template POM for the version. */
   public final static String PH_VERSION = "<!-- version -->";
+
+  /** the placeholder in the template POM for additional build plugins. */
+  public final static String PH_BUILDPLUGINS = "<!-- buildplugins -->";
 
   /** the default name. */
   public final static String DEFAULT_NAME = "bootstrapp-harness";
@@ -79,6 +88,9 @@ public class Template {
 
     /** the version of the project. */
     public String version;
+
+    /** additional build plugins to use. */
+    public String buildPlugins;
   }
 
   /**
@@ -159,6 +171,8 @@ public class Template {
           line = line.replace(PH_PACKAGING, config.noSpringBoot ? "pom" : "jar");
           if (config.mainClass != null)
 	    line = line.replace(PH_MAINCLASS, "" + config.mainClass);
+          if (config.buildPlugins != null)
+	    line = line.replace(PH_BUILDPLUGINS, "" + config.buildPlugins);
           if (!lines.get(i).equals(line)) {
 	    lines.set(i, line);
 	    modified = true;

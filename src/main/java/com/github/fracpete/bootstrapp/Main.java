@@ -6,10 +6,12 @@
 package com.github.fracpete.bootstrapp;
 
 import com.github.fracpete.bootstrapp.core.Maven;
+import com.github.fracpete.bootstrapp.core.Resources;
 import com.github.fracpete.bootstrapp.core.Template;
 import com.github.fracpete.bootstrapp.core.Template.Configuration;
 import com.github.fracpete.processoutput4j.core.impl.SimpleStreamingProcessOwner;
 import com.github.fracpete.processoutput4j.output.StreamingProcessOutput;
+import com.github.fracpete.resourceextractor4j.Content;
 import com.github.fracpete.simpleargparse4j.ArgumentParser;
 import com.github.fracpete.simpleargparse4j.ArgumentParserException;
 import com.github.fracpete.simpleargparse4j.Namespace;
@@ -92,6 +94,12 @@ public class Main {
   /** whether to create spring-boot jar. */
   protected boolean m_SpringBoot;
 
+  /** whether to build .deb package. */
+  protected boolean m_Debian;
+
+  /** whether to build .rpm package. */
+  protected boolean m_Redhat;
+
   /** whether to launch the main class. */
   protected boolean m_Launch;
 
@@ -128,6 +136,8 @@ public class Main {
     m_Scripts           = false;
     m_Launch            = false;
     m_SpringBoot        = false;
+    m_Debian            = false;
+    m_Redhat            = false;
     m_Logger            = null;
     m_HelpRequested     = false;
   }
@@ -522,6 +532,46 @@ public class Main {
   }
 
   /**
+   * Sets whether to generate .deb package.
+   *
+   * @param debian	true if to generate .deb
+   * @return		itself
+   */
+  public Main debian(boolean debian) {
+    m_Debian = debian;
+    return this;
+  }
+
+  /**
+   * Returns whether to generate .deb package.
+   *
+   * @return		true if to generate .deb
+   */
+  public boolean getDebian() {
+    return m_Debian;
+  }
+
+  /**
+   * Sets whether to generate .rpm package.
+   *
+   * @param redhat	true if to generate .rpm
+   * @return		itself
+   */
+  public Main redhat(boolean redhat) {
+    m_Redhat = redhat;
+    return this;
+  }
+
+  /**
+   * Returns whether to generate .rpm package.
+   *
+   * @return		true if to generate .rpm
+   */
+  public boolean getRedhat() {
+    return m_Redhat;
+  }
+
+  /**
    * Sets whether to launch the main class.
    *
    * @param launch	true if to launch
@@ -625,6 +675,16 @@ public class Main {
       .setDefault(false)
       .dest("spring_boot")
       .help("If enabled, a spring-boot jar is generated utilizing the main class (single jar with all dependencies contained).");
+    parser.addOption("--deb")
+      .type(Type.BOOLEAN)
+      .setDefault(false)
+      .dest("debian")
+      .help("If enabled, a Debian .deb package is generated. Required tools: fakeroot, dpkg-deb");
+    parser.addOption("--rpm")
+      .type(Type.BOOLEAN)
+      .setDefault(false)
+      .dest("redhat")
+      .help("If enabled, a Redhat .rpm package is generated.");
     parser.addOption("-l", "--launch")
       .type(Type.BOOLEAN)
       .setDefault(false)
@@ -656,6 +716,8 @@ public class Main {
     mainClass(ns.getString("main_class"));
     scripts(ns.getBoolean("scripts"));
     springBoot(ns.getBoolean("spring_boot"));
+    debian(ns.getBoolean("debian"));
+    redhat(ns.getBoolean("redhat"));
     launch(ns.getBoolean("launch"));
     return true;
   }
@@ -750,7 +812,7 @@ public class Main {
     if (!m_OutputDir.isDirectory())
       return "Output directory is not a directory: " + m_OutputDir;
 
-    m_OutputDirMaven = new File(m_OutputDir.getAbsolutePath() + "/output");
+    m_OutputDirMaven = new File(m_OutputDir.getAbsolutePath() + "/target");
 
     return null;
   }
@@ -763,6 +825,8 @@ public class Main {
   protected String initPomTemplate() {
     String		result;
     Configuration	config;
+    StringBuilder	buildPlugins;
+    String		buildPlugin;
 
     config = new Configuration();
     config.outputDirMaven = m_OutputDirMaven;
@@ -772,6 +836,18 @@ public class Main {
     config.mainClass      = m_MainClass;
     config.name           = m_Name;
     config.version        = m_Version;
+
+    buildPlugins = new StringBuilder();
+    if (m_Debian) {
+      buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.DEBIANBUILD_FILE);
+      buildPlugins.append(buildPlugin);
+    }
+    if (m_Redhat) {
+      buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.REDHATBUILD_FILE);
+      buildPlugins.append(buildPlugin);
+    }
+    if (buildPlugins.length() > 0)
+      config.buildPlugins = buildPlugins.toString();
 
     if (m_PomTemplate == null) {
       result = Template.configureBundledTemplate(m_OutputDir, config);
@@ -804,6 +880,8 @@ public class Main {
     if (m_Clean)
       goals.add("clean");
     goals.add("package");
+    if (m_Debian)
+      goals.add("deb:package");
 
     request = new DefaultInvocationRequest();
     request.setPomFile(m_ActPomTemplate);
@@ -950,6 +1028,49 @@ public class Main {
   }
 
   /**
+   * Generates startup shell script for debian/redhat packages.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  protected String createLaunchScript() {
+    List<String>	cmd;
+    StringBuilder	script;
+    File		dir;
+    File		file;
+
+    if (m_MainClass == null)
+      return "Cannot create launch script for Debian/Redhat packages without a main class!";
+
+    dir = new File(m_OutputDir.getAbsolutePath());
+    if (!dir.exists()) {
+      if (!dir.mkdirs())
+	return "Failed to create directory for launch script: " + dir;
+    }
+
+    cmd = buildLaunchCommand("java", "\"$CP\"");
+    file = new File(dir.getAbsolutePath() + "/launch");
+    script = new StringBuilder();
+    script.append("#!/bin/bash\n");
+    script.append("#\n");
+    script.append("# Start script for " + m_Name + "\n");
+    script.append("#\n");
+    script.append("CP=\"/usr/lib/" + m_Name + "/*\"\n");
+    for (String c: cmd)
+      script.append(c).append(" ");
+    script.append("\n");
+    try {
+      Files.write(file.toPath(), script.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+      file.setExecutable(true);
+    }
+    catch (Exception e) {
+      getLogger().log(Level.SEVERE, "Failed to write launch script to: " + file, e);
+      return "Failed to write launch script to '" + file + "': " + e;
+    }
+
+    return null;
+  }
+
+  /**
    * Launches the main class, if provided.
    *
    * @return		null if successful, otherwise error message
@@ -998,8 +1119,12 @@ public class Main {
       return result;
     if ((result = initPomTemplate()) != null)
       return result;
+    if (m_Debian || m_Redhat) {
+      if ((result = createLaunchScript()) != null)
+	return result;
+    }
 
-    // bootstrap
+    // bootstrap application
     if ((result = executeMaven()) != null)
       return result;
 
