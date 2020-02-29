@@ -1,5 +1,8 @@
 # bootstrapp
-Command-line tool for bootstrapping Maven applications just by using the dependencies.
+Command-line tool for bootstrapping Maven applications just by using the 
+dependencies. It allows you to generate cross-platform applications, by
+using shell scripts for Linux/Mac and batch files for Windows, or Linux
+packages for Debian (`.deb`) and/or Redhat (`.rpm`).
 
 
 ## Command-line options
@@ -69,7 +72,9 @@ Options:
 	If enabled, the supplied main class will get launched.
 ```
 
-## Example
+## Examples
+
+### Cross-platform
 
 The following example will bootstrap Weka 3.9.4 (incl. sources)
 in directory `./out` and create start scripts (shell/batch) for
@@ -77,6 +82,7 @@ Weka's GUIChooser, using 1GB of heap size:
 
 ```
 java com.github.fracpete.bootstrapp.Main \
+  -C \
   -d nz.ac.waikato.cms.weka:weka-dev:3.9.4 \
   -s \ 
   -o ./out \
@@ -96,12 +102,56 @@ public static class TestBootstrapp {
   public static void main(String[] args) throws Exception {
     Main main = new Main();
     String result = main
+        .clean(true)
         .dependencies("nz.ac.waikato.cms.weka:weka-dev:3.9.4")
         .sources(true)
         .outputDir(new File("./out"))
         .jvm("-Xmx1g")
         .mainClass("weka.gui.GUIChooser")
         .scripts(true)
+        .execute();
+    if (result != null)
+      System.err.println(result);
+  }
+}
+```
+
+### Debian package
+
+Instead of generating a cross-platform application, the following example
+will generated a .deb package for Debian-based Linux distributions:
+
+```
+java com.github.fracpete.bootstrapp.Main \
+  -C \
+  -d nz.ac.waikato.cms.weka:weka-dev:3.9.4 \
+  -o ./out \
+  -v -Xmx1g \
+  -c weka.gui.GUIChooser \
+  -n weka
+  -V 3.9.4
+  --deb
+```
+
+And again, from within Java:
+
+```java
+import com.github.fracpete.bootstrapp.Main;
+import java.io.File;
+
+public static class TestBootstrapp {
+  
+  public static void main(String[] args) throws Exception {
+    Main main = new Main();
+    String result = main
+        .clean(true)
+        .dependencies("nz.ac.waikato.cms.weka:weka-dev:3.9.4")
+        .outputDir(new File("./out"))
+        .jvm("-Xmx1g")
+        .mainClass("weka.gui.GUIChooser")
+        .name("weka")
+        .version("3.9.4")
+        .debian(true)
         .execute();
     if (result != null)
       System.err.println(result);
