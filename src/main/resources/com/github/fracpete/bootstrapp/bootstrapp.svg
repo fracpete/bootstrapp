@@ -15,7 +15,7 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   sodipodi:docname="bootstrap.svg">
+   sodipodi:docname="bootstrapp.svg">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -44,7 +44,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -54,34 +54,33 @@
      id="layer1"
      transform="translate(0,-271.676)">
     <g
-       id="g48"
-       transform="translate(-1.889881,255.7013)">
+       id="g80">
       <text
          id="text12"
-         y="27.125002"
-         x="4.3201499"
+         y="282.82629"
+         x="2.430269"
          style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan14"
            style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:10.58333302px;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332px"
-           y="27.125002"
-           x="4.3201499"
+           y="282.82629"
+           x="2.430269"
            sodipodi:role="line">BOOT</tspan></text>
       <text
-         transform="scale(0.92453017,1.0816305)"
+         transform="scale(0.84221999,1.1873382)"
          id="text12-4"
-         y="35.104427"
-         x="5.0213141"
-         style="font-style:normal;font-weight:normal;font-size:9.78461075px;line-height:1.25;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.24461526px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         y="247.33586"
+         x="3.3992829"
+         style="font-style:normal;font-weight:normal;font-size:8.91349506px;line-height:1.25;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.22283736px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan14-1"
-           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:9.78461075px;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.24461526px"
-           y="35.104427"
-           x="5.0213141"
-           sodipodi:role="line">STRAP</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:8.91349506px;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.22283736px"
+           y="247.33586"
+           x="3.3992829"
+           sodipodi:role="line">STRAPP</tspan></text>
       <rect
-         y="15.974702"
-         x="1.889881"
+         y="271.67599"
+         x="1.4823914e-08"
          height="25.324404"
          width="37.986607"
          id="rect41"
