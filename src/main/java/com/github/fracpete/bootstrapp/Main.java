@@ -97,8 +97,14 @@ public class Main {
   /** whether to build .deb package. */
   protected boolean m_Debian;
 
+  /** the custom debian maven snippet to use. */
+  protected File m_DebianSnippet;
+
   /** whether to build .rpm package. */
   protected boolean m_Redhat;
+
+  /** the custom redhat maven snippet to use. */
+  protected File m_RedhatSnippet;
 
   /** whether to launch the main class. */
   protected boolean m_Launch;
@@ -137,7 +143,9 @@ public class Main {
     m_Launch            = false;
     m_SpringBoot        = false;
     m_Debian            = false;
+    m_DebianSnippet     = null;
     m_Redhat            = false;
+    m_RedhatSnippet     = null;
     m_Logger            = null;
     m_HelpRequested     = false;
   }
@@ -552,6 +560,26 @@ public class Main {
   }
 
   /**
+   * Sets the file containing the custom maven snippet file for generating the debian package.
+   *
+   * @param snippet	the file
+   * @return		itself
+   */
+  public Main debianSnippet(File snippet) {
+    m_DebianSnippet = snippet;
+    return this;
+  }
+
+  /**
+   * Returns the file containing the custom maven snippet file for generating the debian package.
+   *
+   * @return		the file
+   */
+  public File getDebianSnippet() {
+    return m_DebianSnippet;
+  }
+
+  /**
    * Sets whether to generate .rpm package.
    *
    * @param redhat	true if to generate .rpm
@@ -569,6 +597,26 @@ public class Main {
    */
   public boolean getRedhat() {
     return m_Redhat;
+  }
+
+  /**
+   * Sets the file containing the custom maven snippet file for generating the redhat package.
+   *
+   * @param snippet	the file
+   * @return		itself
+   */
+  public Main redhatSnippet(File snippet) {
+    m_RedhatSnippet = snippet;
+    return this;
+  }
+
+  /**
+   * Returns the file containing the custom maven snippet file for generating the redhat package.
+   *
+   * @return		the file
+   */
+  public File getRedhatSnippet() {
+    return m_RedhatSnippet;
   }
 
   /**
@@ -619,7 +667,7 @@ public class Main {
       .required(false)
       .setDefault(Template.DEFAULT_NAME)
       .dest("name")
-      .help("The name to use for the project in the pom.xml");
+      .help("The name to use for the project in the pom.xml. Also used as library directory and executable name when generating Debian/Redhat packages.");
     parser.addOption("-V", "--version")
       .required(false)
       .setDefault(Template.DEFAULT_VERSION)
@@ -680,11 +728,21 @@ public class Main {
       .setDefault(false)
       .dest("debian")
       .help("If enabled, a Debian .deb package is generated. Required tools: fakeroot, dpkg-deb");
+    parser.addOption("--deb-snippet")
+      .type(Type.EXISTING_FILE)
+      .required(false)
+      .dest("debian_snippet")
+      .help("The custom Maven pom.xml snippet for generating a Debian package.");
     parser.addOption("--rpm")
       .type(Type.BOOLEAN)
       .setDefault(false)
       .dest("redhat")
       .help("If enabled, a Redhat .rpm package is generated.");
+    parser.addOption("--rpm-snippet")
+      .type(Type.EXISTING_FILE)
+      .required(false)
+      .dest("rpm_snippet")
+      .help("The custom Maven pom.xml snippet for generating a Redhat package.");
     parser.addOption("-l", "--launch")
       .type(Type.BOOLEAN)
       .setDefault(false)
@@ -717,7 +775,9 @@ public class Main {
     scripts(ns.getBoolean("scripts"));
     springBoot(ns.getBoolean("spring_boot"));
     debian(ns.getBoolean("debian"));
+    debianSnippet(ns.getFile("debian_snippet"));
     redhat(ns.getBoolean("redhat"));
+    redhatSnippet(ns.getFile("redhat_snippet"));
     launch(ns.getBoolean("launch"));
     return true;
   }
@@ -827,6 +887,7 @@ public class Main {
     Configuration	config;
     StringBuilder	buildPlugins;
     String		buildPlugin;
+    List<String>	lines;
 
     config = new Configuration();
     config.outputDirMaven = m_OutputDirMaven;
@@ -839,12 +900,38 @@ public class Main {
 
     buildPlugins = new StringBuilder();
     if (m_Debian) {
-      buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.DEBIANBUILD_FILE);
-      buildPlugins.append(buildPlugin);
+      if (m_DebianSnippet != null) {
+        try {
+	  lines = Files.readAllLines(m_DebianSnippet.toPath());
+	  for (String line: lines)
+	    buildPlugins.append(line).append("\n");
+	}
+	catch (Exception e) {
+          getLogger().log(Level.SEVERE, "Failed to load Debian maven snippet: " + m_DebianSnippet, e);
+          return "Failed to load Debian maven snippet: " + m_DebianSnippet;
+	}
+      }
+      else {
+	buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.DEBIANBUILD_FILE);
+	buildPlugins.append(buildPlugin);
+      }
     }
     if (m_Redhat) {
-      buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.REDHATBUILD_FILE);
-      buildPlugins.append(buildPlugin);
+      if (m_RedhatSnippet != null) {
+        try {
+	  lines = Files.readAllLines(m_RedhatSnippet.toPath());
+	  for (String line: lines)
+	    buildPlugins.append(line).append("\n");
+	}
+	catch (Exception e) {
+          getLogger().log(Level.SEVERE, "Failed to load Redhat maven snippet: " + m_RedhatSnippet, e);
+          return "Failed to load Redhat maven snippet: " + m_RedhatSnippet;
+	}
+      }
+      else {
+	buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.REDHATBUILD_FILE);
+	buildPlugins.append(buildPlugin);
+      }
     }
     if (buildPlugins.length() > 0)
       config.buildPlugins = buildPlugins.toString();
