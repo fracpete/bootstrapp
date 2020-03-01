@@ -14,7 +14,8 @@ Usage: [--help] [-m MAVEN_HOME]
        [-u MAVEN_USER_SETTINGS]
        [-j JAVA_HOME] [-n NAME] [-V VERSION] [-d DEPENDENCIES...]
        [-D DEPENDENCY_FILES...] [-C] [-s] [-p POM_TEMPLATE] -o OUTPUT_DIR [-c MAIN_CLASS] [-v JVM...]
-       [-e] [-b] [--deb] [--rpm] [-l]
+       [-e] [-b] [--deb] [--deb-snippet DEBIAN_SNIPPET] [--rpm]
+       [--rpm-snippet RPM_SNIPPET] [-l]
 
 Options:
 -m, --maven_home MAVEN_HOME
@@ -27,7 +28,7 @@ Options:
 	The Java home to use for the Maven execution.
 
 -n, --name NAME
-	The name to use for the project in the pom.xml
+	The name to use for the project in the pom.xml. Also used as library directory and executable name when generating Debian/Redhat packages.
 
 -V, --version VERSION
 	The version to use for the project in the pom.xml
@@ -65,8 +66,14 @@ Options:
 --deb
 	If enabled, a Debian .deb package is generated. Required tools: fakeroot, dpkg-deb
 
+--deb-snippet DEBIAN_SNIPPET
+	The custom Maven pom.xml snippet for generating a Debian package.
+
 --rpm
 	If enabled, a Redhat .rpm package is generated.
+
+--rpm-snippet RPM_SNIPPET
+	The custom Maven pom.xml snippet for generating a Redhat package.
 
 -l, --launch
 	If enabled, the supplied main class will get launched.
@@ -168,6 +175,7 @@ application, in this case you will get `/usr/bin/weka`.
 Below are executable spring-boot jars for download that can be executed
 via `java -jar XYZ.jar [options]`:
 
+* [0.1.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.1/bootstrapp-0.1.1-spring-boot.jar)
 * [0.1.0](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.0/bootstrapp-0.1.0-spring-boot.jar)
 * [0.0.3](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.3/bootstrapp-0.0.3-spring-boot.jar)
 * [0.0.2](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.2/bootstrapp-0.0.2-spring-boot.jar)
@@ -180,7 +188,7 @@ via `java -jar XYZ.jar [options]`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>bootstrapp</artifactId>
-      <version>0.1.0</version>
+      <version>0.1.1</version>
     </dependency>
 ```
 
