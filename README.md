@@ -159,6 +159,10 @@ public static class TestBootstrapp {
 }
 ```
 
+**Note:** The *name* is used as package name and executable for launching the
+application, in this case you will get `/usr/bin/weka`.
+
+
 ## Releases
 
 Below are executable spring-boot jars for download that can be executed
