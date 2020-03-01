@@ -24,8 +24,14 @@ public class Template {
   /** the debian build plugin file. */
   public final static String DEBIANBUILD_FILE = "debian.build";
 
+  /** the debian build plugin file (incl sources). */
+  public final static String DEBIANBUILDSRC_FILE = "debian.build_incl_sources";
+
   /** the redhat build plugin file. */
   public final static String REDHATBUILD_FILE = "redhat.build";
+
+  /** the redhat build plugin file (incl sources). */
+  public final static String REDHATBUILDSRC_FILE = "redhat.build_incl_sources";
 
   /** the placeholder in the template POM for the dependencies (full dependencies tag). */
   public final static String PH_DEPENDENCIES = "<!-- dependencies -->";

@@ -912,7 +912,10 @@ public class Main {
 	}
       }
       else {
-	buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.DEBIANBUILD_FILE);
+        if (m_Sources)
+	  buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.DEBIANBUILDSRC_FILE);
+        else
+	  buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.DEBIANBUILD_FILE);
 	buildPlugins.append(buildPlugin);
       }
     }
@@ -929,7 +932,10 @@ public class Main {
 	}
       }
       else {
-	buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.REDHATBUILD_FILE);
+        if (m_Sources)
+	  buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.REDHATBUILDSRC_FILE);
+        else
+	  buildPlugin = Content.readString(Resources.LOCATION + "/" + Template.REDHATBUILD_FILE);
 	buildPlugins.append(buildPlugin);
       }
     }
