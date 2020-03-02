@@ -22,6 +22,7 @@ import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
@@ -67,6 +68,9 @@ public class Main {
   /** the dependency files. */
   protected List<File> m_DependencyFiles;
 
+  /** the external jar files/dirs. */
+  protected List<File> m_ExternalJars;
+
   /** the pom template. */
   protected File m_PomTemplate;
 
@@ -87,6 +91,9 @@ public class Main {
 
   /** whether to retrieve source jars or not. */
   protected boolean m_Sources;
+
+  /** the external source jar files/dirs. */
+  protected List<File> m_ExternalSources;
 
   /** whether to generate start scripts (when supplying a main class). */
   protected boolean m_Scripts;
@@ -134,11 +141,13 @@ public class Main {
     m_JVM               = null;
     m_Dependencies      = null;
     m_DependencyFiles   = null;
+    m_ExternalJars      = null;
     m_PomTemplate       = null;
     m_Name              = Template.DEFAULT_NAME;
     m_Version           = Template.DEFAULT_VERSION;
     m_Clean             = false;
     m_Sources           = false;
+    m_ExternalSources   = null;
     m_Scripts           = false;
     m_Launch            = false;
     m_SpringBoot        = false;
@@ -386,6 +395,40 @@ public class Main {
   }
 
   /**
+   * Sets the external jar files/dirs to use.
+   *
+   * @param external	the files/dirs, null to unset
+   * @return		itself
+   */
+  public Main externalJars(List<File> external) {
+    m_ExternalJars = external;
+    return this;
+  }
+
+  /**
+   * Sets the external jar files/dirs to use.
+   *
+   * @param external	the files/dirs, null to unset
+   * @return		itself
+   */
+  public Main externalJars(File... external) {
+    if (external == null)
+      m_ExternalJars = null;
+    else
+      externalJars(Arrays.asList(external));
+    return this;
+  }
+
+  /**
+   * Returns the currently set external jar files/dirs.
+   * 
+   * @return		the files/dirs, null if none set
+   */
+  public List<File> getExternalJars() {
+    return m_ExternalJars;
+  }
+  
+  /**
    * Sets whether to execute the "clean" goal.
    *
    * @param clean	true if to clean
@@ -423,6 +466,40 @@ public class Main {
    */
   public boolean getSources() {
     return m_Sources;
+  }
+
+  /**
+   * Sets the external source files/dirs to use.
+   *
+   * @param external	the files/dirs, null to unset
+   * @return		itself
+   */
+  public Main externalSources(List<File> external) {
+    m_ExternalSources = external;
+    return this;
+  }
+
+  /**
+   * Sets the external source files/dirs to use.
+   *
+   * @param external	the files/dirs, null to unset
+   * @return		itself
+   */
+  public Main externalSources(File... external) {
+    if (external == null)
+      m_ExternalSources = null;
+    else
+      externalSources(Arrays.asList(external));
+    return this;
+  }
+
+  /**
+   * Returns the currently set external source files/dirs.
+   * 
+   * @return		the files/dirs, null if none set
+   */
+  public List<File> getExternalSources() {
+    return m_ExternalSources;
   }
 
   /**
@@ -647,21 +724,24 @@ public class Main {
   protected ArgumentParser getParser() {
     ArgumentParser 		parser;
 
-    parser = new ArgumentParser("Bootstrapping Maven applications by supplying only dependencies.");
+    parser = new ArgumentParser("Bootstrapping Java applications with Maven dependencies and/or jar files.");
     parser.addOption("-m", "--maven_home")
       .required(false)
       .type(Type.EXISTING_DIR)
       .dest("maven_home")
+      .metaVar("DIR")
       .help("The directory with a local Maven installation to use instead of the downloaded one.");
     parser.addOption("-u", "--maven_user_settings")
       .required(false)
       .type(Type.EXISTING_FILE)
       .dest("maven_user_settings")
+      .metaVar("FILE")
       .help("The file with the maven user settings to use other than $HOME/.m2/settings.xml.");
     parser.addOption("-j", "--java_home")
       .required(false)
       .type(Type.EXISTING_DIR)
       .dest("java_home")
+      .metaVar("DIR")
       .help("The Java home to use for the Maven execution.");
     parser.addOption("-n", "--name")
       .required(false)
@@ -677,13 +757,22 @@ public class Main {
       .required(false)
       .multiple(true)
       .dest("dependencies")
+      .metaVar("DEPENDENCY")
       .help("The maven dependencies to use for bootstrapping the application (group:artifact:version), e.g.: nz.ac.waikato.cms.weka:weka-dev:3.9.4");
     parser.addOption("-D", "--dependency-file")
       .required(false)
       .multiple(true)
       .type(Type.EXISTING_FILE)
       .dest("dependency_files")
+      .metaVar("DEPENDENCY_FILE")
       .help("The file(s) with maven dependencies to use for bootstrapping the application (group:artifact:version), one dependency per line.");
+    parser.addOption("-J", "--external-jar")
+      .required(false)
+      .multiple(true)
+      .type(Type.EXISTING_FILE_OR_DIRECTORY)
+      .dest("external_jars")
+      .metaVar("JAR_OR_DIR")
+      .help("The external jar or directory with jar files to also include in the application.");
     parser.addOption("-C", "--clean")
       .type(Type.BOOLEAN)
       .setDefault(false)
@@ -694,19 +783,29 @@ public class Main {
       .setDefault(false)
       .dest("sources")
       .help("If enabled, source jars of the Maven artifacts will get downloaded as well and stored in a separated directory.");
+    parser.addOption("-S", "--external-source")
+      .required(false)
+      .multiple(true)
+      .type(Type.EXISTING_FILE_OR_DIRECTORY)
+      .dest("external_sources")
+      .metaVar("JAR_OR_DIR")
+      .help("The external source jar or directory with source jar files to also include in the application.");
     parser.addOption("-p", "--pom_template")
       .required(false)
       .type(Type.EXISTING_FILE)
       .dest("pom_template")
+      .metaVar("FILE")
       .help("The alternative template for the pom.xml to use.");
     parser.addOption("-o", "--output_dir")
       .required(true)
       .type(Type.DIRECTORY)
       .dest("output_dir")
+      .metaVar("DIR")
       .help("The directory to output the bootstrapped application in.");
     parser.addOption("-c", "--main_class")
       .required(false)
       .dest("main_class")
+      .metaVar("CLASSNAME")
       .help("The main class to execute after bootstrapping the application.");
     parser.addOption("-v", "--jvm")
       .required(false)
@@ -732,6 +831,7 @@ public class Main {
       .type(Type.EXISTING_FILE)
       .required(false)
       .dest("debian_snippet")
+      .metaVar("FILE")
       .help("The custom Maven pom.xml snippet for generating a Debian package.");
     parser.addOption("--rpm")
       .type(Type.BOOLEAN)
@@ -742,6 +842,7 @@ public class Main {
       .type(Type.EXISTING_FILE)
       .required(false)
       .dest("rpm_snippet")
+      .metaVar("FILE")
       .help("The custom Maven pom.xml snippet for generating a Redhat package.");
     parser.addOption("-l", "--launch")
       .type(Type.BOOLEAN)
@@ -768,8 +869,10 @@ public class Main {
     version(ns.getString("version"));
     dependencies(ns.getList("dependencies"));
     dependencyFiles(ns.getList("dependency_files"));
+    externalJars(ns.getList("external_jars"));
     clean(ns.getBoolean("clean"));
     sources(ns.getBoolean("sources"));
+    externalSources(ns.getList("external_sources"));
     pomTemplate(ns.getFile("pom_template"));
     mainClass(ns.getString("main_class"));
     scripts(ns.getBoolean("scripts"));
@@ -878,6 +981,36 @@ public class Main {
   }
 
   /**
+   * Expands the jars/dirs to just jars.
+   *
+   * @param list	the list of jars/dirs to expand
+   * @return		the expanded list
+   */
+  protected List<File> toJars(List<File> list) {
+    List<File>		result;
+    File[]		files;
+
+    result = new ArrayList<>();
+    for (File ext: m_ExternalJars) {
+      if (ext.isDirectory()) {
+	files = ext.listFiles(new FilenameFilter() {
+	  @Override
+	  public boolean accept(File dir, String name) {
+	    return name.toLowerCase().endsWith(".jar");
+	  }
+	});
+	if (files != null)
+	  result.addAll(Arrays.asList(files));
+      }
+      else {
+	result.add(ext);
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Initializes the POM template.
    *
    * @return		null if successful, otherwise error message
@@ -897,6 +1030,10 @@ public class Main {
     config.mainClass      = m_MainClass;
     config.name           = m_Name;
     config.version        = m_Version;
+    if (m_ExternalJars != null)
+      config.externalJars = toJars(m_ExternalJars);
+    if (m_ExternalSources != null)
+      config.externalSources = toJars(m_ExternalSources);
 
     buildPlugins = new StringBuilder();
     if (m_Debian) {

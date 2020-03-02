@@ -80,6 +80,12 @@ public class Template {
     /** the dependencies to use (group:artifact:version). */
     public List<String> dependencies;
 
+    /** the external jars to use. */
+    public List<File> externalJars;
+
+    /** the external sources to use. */
+    public List<File> externalSources;
+
     /** whether to skip downloading sources. */
     public boolean noSources;
 
@@ -144,6 +150,8 @@ public class Template {
     // build dependency string
     deps = new StringBuilder();
     deps.append("  <dependencies>\n");
+
+    // regular dependencies
     for (String dependency: config.dependencies) {
       parts = dependency.split(":");
       if (parts.length == 3) {
@@ -157,6 +165,34 @@ public class Template {
         LOGGER.warning("Skipping dependency as it does not conform to format 'group:artifact:version': " + dependency);
       }
     }
+
+    // external jars
+    if (config.externalJars != null) {
+      for (File externalJar: config.externalJars) {
+        deps.append("    <dependency>\n");
+        deps.append("      <groupId>bootstrapp</groupId>\n");
+        deps.append("      <artifactId>ext-" + externalJar.getName().toLowerCase().replace(".jar", "") + "</artifactId>\n");
+        deps.append("      <version>0.0.0</version>\n");
+        deps.append("      <scope>system</scope>\n");
+        deps.append("      <systemPath>" + externalJar.getAbsolutePath() + "</systemPath>\n");
+        deps.append("    </dependency>\n");
+      }
+    }
+
+    // external sources
+    if (config.externalSources != null) {
+      for (File externalSource : config.externalSources) {
+        deps.append("    <dependency>\n");
+        deps.append("      <groupId>bootstrapp</groupId>\n");
+        deps.append("      <artifactId>ext-" + externalSource.getName().toLowerCase().replace(".jar", "") + "</artifactId>\n");
+        deps.append("      <version>0.0.0</version>\n");
+        deps.append("      <scope>system</scope>\n");
+        deps.append("      <classifier>sources</classifier>\n");
+        deps.append("      <systemPath>" + externalSource.getAbsolutePath() + "</systemPath>\n");
+        deps.append("    </dependency>\n");
+      }
+    }
+
     deps.append("  </dependencies>\n");
     depsStr = deps.toString();
     if (config.dependencies.size() == 0)
