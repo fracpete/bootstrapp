@@ -1,8 +1,8 @@
 # bootstrapp
-Command-line tool for bootstrapping Java applications just by using Maven 
-dependencies and/or external jar files. It allows you to generate cross-platform 
-applications, by using shell scripts for Linux/Mac and batch files for Windows, 
-or Linux packages for Debian (`.deb`) and/or Redhat (`.rpm`).
+Command-line tool for bootstrapping Java applications by using Maven dependencies 
+and/or external jar files. It allows you to generate cross-platform applications, 
+by using shell scripts for Linux/Mac and batch files for Windows, or Linux 
+packages for Debian (`.deb`) and/or Redhat (`.rpm`).
 
 
 ## Command-line options
