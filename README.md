@@ -2,8 +2,8 @@
 Command-line tool for bootstrapping Java applications by using Maven dependencies 
 and/or external jar files. It allows you to generate cross-platform applications, 
 by using shell scripts for Linux/Mac and batch files for Windows, or Linux 
-packages for Debian (`.deb`) and/or Redhat (`.rpm`). Docker images can be
-generated as well by generating `Dockerfile` output.
+packages for Debian (`.deb`) and/or Redhat (`.rpm`). [Docker](https://www.docker.com/) 
+images can be generated as well by generating `Dockerfile` output.
 
 
 ## Command-line options
@@ -204,7 +204,7 @@ The following example generates a `Dockerfile` for Weka 3.9.4, which allows you
 to launch Weka from within a Docker container using `/bootstrapp/weka-3.9.4.sh` 
 (`name-version.sh`). In order to get the Java Swing user interface working, 
 some additional libraries need to get installed on top of the `openjdk:11-jdk-slim-buster` base image 
-([docker.additional](/home/fracpete/development/projects/fracpete/bootstrapp/src/main/resources/com/github/fracpete/bootstrapp/docker.additional)). 
+([docker.additional](src/main/resources/com/github/fracpete/bootstrapp/docker.additional)). 
 
 ```
 java com.github.fracpete.bootstrapp.Main \
