@@ -113,6 +113,15 @@ public class Main {
   /** the custom redhat maven snippet to use. */
   protected File m_RedhatSnippet;
 
+  /** whether to generate a Dockerfile. */
+  protected boolean m_Docker;
+
+  /** the docker base image. */
+  protected String m_DockerBaseImage;
+
+  /** the custom docker snippet to use. */
+  protected File m_DockerSnippet;
+
   /** whether to launch the main class. */
   protected boolean m_Launch;
 
@@ -155,6 +164,9 @@ public class Main {
     m_DebianSnippet     = null;
     m_Redhat            = false;
     m_RedhatSnippet     = null;
+    m_Docker            = false;
+    m_DockerBaseImage   = null;
+    m_DockerSnippet     = null;
     m_Logger            = null;
     m_HelpRequested     = false;
   }
@@ -697,6 +709,66 @@ public class Main {
   }
 
   /**
+   * Sets whether to generate Dockerfile.
+   *
+   * @param docker	true if to generate
+   * @return		itself
+   */
+  public Main docker(boolean docker) {
+    m_Docker = docker;
+    return this;
+  }
+
+  /**
+   * Returns whether to generate Dockerfile.
+   *
+   * @return		true if to generate
+   */
+  public boolean getDocker() {
+    return m_Docker;
+  }
+
+  /**
+   * Sets the docker base image to use.
+   *
+   * @param image	the image
+   * @return		itself
+   */
+  public Main dockerBaseImage(String image) {
+    m_DockerBaseImage = image;
+    return this;
+  }
+
+  /**
+   * Returns the docker base image to use.
+   *
+   * @return		the image
+   */
+  public String getDockerBaseImage() {
+    return m_DockerBaseImage;
+  }
+
+  /**
+   * Sets the file containing the custom instructions to include in the Dockerfile.
+   *
+   * @param snippet	the file
+   * @return		itself
+   */
+  public Main dockerSnippet(File snippet) {
+    m_DockerSnippet = snippet;
+    return this;
+  }
+
+  /**
+   * Returns the file containing the custom instructions to include in the Dockerfile.
+   *
+   * @return		the file
+   */
+  public File getDockerSnippet() {
+    return m_DockerSnippet;
+  }
+
+  /**
    * Sets whether to launch the main class.
    *
    * @param launch	true if to launch
@@ -759,7 +831,7 @@ public class Main {
       .dest("dependencies")
       .metaVar("DEPENDENCY")
       .help("The maven dependencies to use for bootstrapping the application (group:artifact:version), e.g.: nz.ac.waikato.cms.weka:weka-dev:3.9.4");
-    parser.addOption("-D", "--dependency-file")
+    parser.addOption("-D", "--dependency_file")
       .required(false)
       .multiple(true)
       .type(Type.EXISTING_FILE)
@@ -817,7 +889,12 @@ public class Main {
       .setDefault(false)
       .dest("scripts")
       .help("If enabled, shell/batch scripts get generated to launch the main class.");
-    parser.addOption("-b", "--spring-boot")
+    parser.addOption("-l", "--launch")
+      .type(Type.BOOLEAN)
+      .setDefault(false)
+      .dest("launch")
+      .help("If enabled, the supplied main class will get launched.");
+    parser.addOption("-b", "--spring_boot")
       .type(Type.BOOLEAN)
       .setDefault(false)
       .dest("spring_boot")
@@ -827,7 +904,7 @@ public class Main {
       .setDefault(false)
       .dest("debian")
       .help("If enabled, a Debian .deb package is generated. Required tools: fakeroot, dpkg-deb");
-    parser.addOption("--deb-snippet")
+    parser.addOption("--deb_snippet")
       .type(Type.EXISTING_FILE)
       .required(false)
       .dest("debian_snippet")
@@ -838,17 +915,28 @@ public class Main {
       .setDefault(false)
       .dest("redhat")
       .help("If enabled, a Redhat .rpm package is generated.");
-    parser.addOption("--rpm-snippet")
+    parser.addOption("--rpm_snippet")
       .type(Type.EXISTING_FILE)
       .required(false)
       .dest("rpm_snippet")
       .metaVar("FILE")
       .help("The custom Maven pom.xml snippet for generating a Redhat package.");
-    parser.addOption("-l", "--launch")
+    parser.addOption("--docker")
       .type(Type.BOOLEAN)
       .setDefault(false)
-      .dest("launch")
-      .help("If enabled, the supplied main class will get launched.");
+      .dest("docker")
+      .help("If enabled, a Dockerfile is generated.");
+    parser.addOption("--docker_base_image")
+      .required(false)
+      .dest("docker_base_image")
+      .metaVar("IMAGE")
+      .help("The base image to use for the docker image, e.g., 'openjdk:11-jdk-slim-buster'.");
+    parser.addOption("--docker_snippet")
+      .type(Type.EXISTING_FILE)
+      .required(false)
+      .dest("docker_snippet")
+      .metaVar("FILE")
+      .help("The file with custom docker instructions.");
 
     return parser;
   }
@@ -881,6 +969,9 @@ public class Main {
     debianSnippet(ns.getFile("debian_snippet"));
     redhat(ns.getBoolean("redhat"));
     redhatSnippet(ns.getFile("redhat_snippet"));
+    docker(ns.getBoolean("docker"));
+    dockerBaseImage(ns.getString("docker_base_image"));
+    dockerSnippet(ns.getFile("docker_snippet"));
     launch(ns.getBoolean("launch"));
     return true;
   }
@@ -1330,6 +1421,130 @@ public class Main {
   }
 
   /**
+   * Generates startup shell script for docker image.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  protected String createDockerScript() {
+    List<String>	cmd;
+    StringBuilder	script;
+    File		dir;
+    File		file;
+    String		name;
+
+    if (m_MainClass == null)
+      return "Cannot create launch script for Docker without a main class!";
+    if ((m_Name == null) || m_Name.isEmpty())
+      return "No name supplied (used for start script and directory for libraries)!";
+
+    name = m_Name;
+    if ((m_Version != null) && !m_Version.isEmpty())
+      name += "-" + m_Version;
+
+    dir = new File(m_OutputDir.getAbsolutePath());
+    if (!dir.exists()) {
+      if (!dir.mkdirs())
+	return "Failed to create directory for launch script: " + dir;
+    }
+
+    cmd = buildLaunchCommand("java", "\"/bootstrapp/" + name + "/lib/*\"");
+    file = new File(dir.getAbsolutePath() + "/" + name + ".sh");
+    script = new StringBuilder();
+    script.append("#!/bin/bash\n");
+    script.append("#\n");
+    script.append("# Start script for " + m_Name + "\n");
+    script.append("#\n");
+    for (String c: cmd)
+      script.append(c).append(" ");
+    script.append("\n");
+    try {
+      Files.write(file.toPath(), script.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+      file.setExecutable(true);
+    }
+    catch (Exception e) {
+      getLogger().log(Level.SEVERE, "Failed to write launch script to: " + file, e);
+      return "Failed to write launch script to '" + file + "': " + e;
+    }
+
+    return null;
+  }
+
+  /**
+   * Initializes the Dockerfile.
+   *
+   * @return		null if successful, otherwise error message
+   */
+  protected String initDockerfile() {
+    File 		file;
+    List<String>	lines;
+    List<String>	content;
+    String		startScript;
+    String		name;
+
+    if (m_DockerBaseImage == null)
+      return "No Docker base image provided!";
+    if ((m_Name == null) || m_Name.isEmpty())
+      return "No name supplied (used for start script and directory for libraries)!";
+
+    name = m_Name;
+    if ((m_Version != null) && !m_Version.isEmpty())
+      name += "-" + m_Version;
+
+    file = new File(m_OutputDir.getAbsolutePath() + "/Dockerfile");
+
+    content = new ArrayList<>();
+    content.add("FROM " + m_DockerBaseImage);
+    content.add("");
+
+    // custom instructions?
+    if (m_DockerSnippet != null) {
+      try {
+	content.add("# additional instructions");
+	lines = Files.readAllLines(m_DockerSnippet.toPath());
+	if (lines != null) {
+	  content.addAll(lines);
+	  content.add("");
+	}
+      }
+      catch (Exception e) {
+	getLogger().log(Level.SEVERE, "Failed to load Docker snippet: " + m_DockerSnippet, e);
+	return "Failed to load Docker snippet: " + m_DockerSnippet;
+      }
+    }
+
+    content.add("# copy libraries");
+    content.add("COPY target/lib/* /bootstrapp/" + name + "/lib/");
+    startScript = null;
+    if (m_MainClass != null) {
+      startScript = "/bootstrapp/" + name + ".sh";
+      content.add("# for launching main class");
+      content.add("COPY " + name + ".sh" + " " + startScript);
+    }
+
+    // write content to file
+    try {
+      Files.write(file.toPath(), content, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    }
+    catch (Exception e) {
+      getLogger().log(Level.SEVERE, "Failed to write Dockerfile to: " + file, e);
+      return "Failed to write Dockerfile to: " + file;
+    }
+
+    // output instructions
+    System.out.println();
+    System.out.println("You can now generate the docker image with the following commands:");
+    System.out.println("cd " + m_OutputDir.getAbsolutePath());
+    System.out.println("[sudo] docker build -t <imagename> .");
+    System.out.println();
+    if (startScript != null) {
+      System.out.println("The main class can be launched with '" + startScript + "' inside the container.");
+      System.out.println();
+    }
+
+    return null;
+  }
+
+  /**
    * Performs the bootstrapping.
    *
    * @return		null if successful, otherwise error message
@@ -1363,6 +1578,14 @@ public class Main {
       return result;
     if (getLaunch() && (result = launchMainClass()) != null)
       return result;
+
+    // docker
+    if (getDocker()) {
+      if ((result = createDockerScript()) != null)
+        return result;
+      if ((result = initDockerfile()) != null)
+        return result;
+    }
 
     return null;
   }

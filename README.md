@@ -2,7 +2,8 @@
 Command-line tool for bootstrapping Java applications by using Maven dependencies 
 and/or external jar files. It allows you to generate cross-platform applications, 
 by using shell scripts for Linux/Mac and batch files for Windows, or Linux 
-packages for Debian (`.deb`) and/or Redhat (`.rpm`).
+packages for Debian (`.deb`) and/or Redhat (`.rpm`). Docker images can be
+generated as well by generating `Dockerfile` output.
 
 
 ## Command-line options
@@ -14,8 +15,9 @@ Bootstrapping Java applications with Maven dependencies and/or jar files.
 Usage: [--help] [-m DIR] [-u FILE] [-j DIR] [-n NAME] [-V VERSION]
        [-d DEPENDENCY...] [-D DEPENDENCY_FILE...]
        [-J JAR_OR_DIR...] [-C] [-s] [-S JAR_OR_DIR...]
-       [-p FILE] -o DIR [-c CLASSNAME] [-v JVM...] [-e] [-b] [--deb]
-       [--deb-snippet FILE] [--rpm] [--rpm-snippet FILE] [-l]
+       [-p FILE] -o DIR [-c CLASSNAME] [-v JVM...] [-e] [-l]
+       [-b] [--deb] [--deb_snippet FILE] [--rpm] [--rpm_snippet FILE]
+       [--docker] [--docker_base_image IMAGE] [--docker_snippet FILE]
 
 Options:
 -m, --maven_home DIR
@@ -40,7 +42,7 @@ Options:
 	The maven dependencies to use for bootstrapping the application
 	(group:artifact:version), e.g.: nz.ac.waikato.cms.weka:weka-dev:3.9.4
 
--D, --dependency-file DEPENDENCY_FILE
+-D, --dependency_file DEPENDENCY_FILE
 	The file(s) with maven dependencies to use for bootstrapping the
 	application (group:artifact:version), one dependency per line.
 
@@ -74,7 +76,10 @@ Options:
 -e, --scripts
 	If enabled, shell/batch scripts get generated to launch the main class.
 
--b, --spring-boot
+-l, --launch
+	If enabled, the supplied main class will get launched.
+
+-b, --spring_boot
 	If enabled, a spring-boot jar is generated utilizing the main class
 	(single jar with all dependencies contained).
 
@@ -82,17 +87,24 @@ Options:
 	If enabled, a Debian .deb package is generated. Required tools: fakeroot,
 	dpkg-deb
 
---deb-snippet FILE
+--deb_snippet FILE
 	The custom Maven pom.xml snippet for generating a Debian package.
 
 --rpm
 	If enabled, a Redhat .rpm package is generated.
 
---rpm-snippet FILE
+--rpm_snippet FILE
 	The custom Maven pom.xml snippet for generating a Redhat package.
 
--l, --launch
-	If enabled, the supplied main class will get launched.
+--docker
+	If enabled, a Dockerfile is generated.
+
+--docker_base_image IMAGE
+	The base image to use for the docker image, e.g.,
+	'openjdk:11-jdk-slim-buster'.
+
+--docker_snippet FILE
+	The file with custom docker instructions.
 ```
 
 ## Examples
@@ -186,11 +198,90 @@ public static class TestBootstrapp {
 application, in this case you will get `/usr/bin/weka`.
 
 
+### Docker
+
+The following example generates a `Dockerfile` for Weka 3.9.4, which allows you
+to launch Weka from within a Docker container using `/bootstrapp/weka-3.9.4.sh` 
+(`name-version.sh`). In order to get the Java Swing user interface working, 
+some additional libraries need to get installed on top of the `openjdk:11-jdk-slim-buster` base image 
+([docker.additional](/home/fracpete/development/projects/fracpete/bootstrapp/src/main/resources/com/github/fracpete/bootstrapp/docker.additional)). 
+
+```
+java com.github.fracpete.bootstrapp.Main \
+  --dependency nz.ac.waikato.cms.weka:weka-dev:3.9.4 \
+  --output_dir ./out \
+  --clean \
+  --jvm -Xmx1g \
+  --main_class weka.gui.GUIChooser \
+  --name weka \
+  --version 3.9.4 \
+  --docker \
+  --docker_base_image openjdk:11-jdk-slim-buster \
+  --docker_snippet ./docker.additional
+```
+
+The command-line in Java code:
+
+```java
+import com.github.fracpete.bootstrapp.Main;
+import java.io.File;
+
+public static class TestBootstrapp {
+  
+  public static void main(String[] args) throws Exception {
+    Main main = new Main();
+    String result = main
+        .dependencies("nz.ac.waikato.cms.weka:weka-dev:3.9.4")
+        .outputDir(new File("./out"))
+        .clean(true)
+        .jvm("-Xmx1g")
+        .mainClass("weka.gui.GUIChooser")
+        .name("weka")
+        .version("3.9.4")
+        .docker(true)
+        .dockerBaseImage("openjdk:11-jdk-slim-buster")
+        .dockerSnippet(new File("./docker.additional"))
+        .execute();
+    if (result != null)
+      System.err.println(result);
+  }
+}
+```
+
+Build the docker image as follows (tagging it as `weka394`):
+
+```
+cd ./out
+[sudo] docker build -t weka394 .
+```
+
+If not already done in the current session, you need to expose your xhost in 
+order to allow the Docker container to display the Weka user interface using 
+your local X-Server:
+
+```
+xhost +local:root
+```
+
+Launch the `weka394` image:
+
+```
+[sudo] docker run -it --env="DISPLAY" \
+  -v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+  weka394:latest \
+  /bootstrapp/weka-3.9.4.sh
+```
+
+**NB:** Windows and Mac users can refer to [this MOA blog](https://moa.cms.waikato.ac.nz/how-to-use-moa-in-docker/)
+for details on how to get it working on their platforms.
+
+
 ## Releases
 
 Below are executable spring-boot jars for download that can be executed
 via `java -jar XYZ.jar [options]`:
 
+* [0.1.3](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.3/bootstrapp-0.1.3-spring-boot.jar)
 * [0.1.2](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.2/bootstrapp-0.1.2-spring-boot.jar)
 * [0.1.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.1/bootstrapp-0.1.1-spring-boot.jar)
 * [0.1.0](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.0/bootstrapp-0.1.0-spring-boot.jar)
@@ -205,7 +296,7 @@ via `java -jar XYZ.jar [options]`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>bootstrapp</artifactId>
-      <version>0.1.2</version>
+      <version>0.1.3</version>
     </dependency>
 ```
 
