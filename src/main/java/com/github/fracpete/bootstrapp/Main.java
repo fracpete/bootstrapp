@@ -1514,6 +1514,8 @@ public class Main {
 
     content.add("# copy libraries");
     content.add("COPY target/lib/* /bootstrapp/" + name + "/lib/");
+    if (m_Sources)
+      content.add("COPY target/src/* /bootstrapp/" + name + "/src/");
     startScript = null;
     if (m_MainClass != null) {
       startScript = "/bootstrapp/" + name + ".sh";
