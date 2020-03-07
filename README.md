@@ -109,6 +109,18 @@ Options:
 
 ## Examples
 
+**Note:**  The following examples use [Weka](https://www.cs.waikato.ac.nz/ml/weka/)
+as the application that we bootstrap. Since Weka is released under the
+[GPLv3](https://www.gnu.org/licenses/gpl-3.0.txt) license, which requires you to
+provide the sources alongside the binaries, we always set the flag to include
+the *sources* as well. For other licenses, like [MIT](https://opensource.org/licenses/MIT) 
+or [Apache 2.0](https://opensource.org/licenses/Apache-2.0), you do not need
+to do that. Also, for projects that are only used in-house and not publicly
+available, then the requirement to bundle the source code as well, does not
+apply either. However, I consider it good practice to always bundle the source 
+code with the binaries. ;-) 
+
+
 ### Cross-platform
 
 The following example will bootstrap Weka 3.9.4 (incl. sources)
@@ -116,7 +128,7 @@ in directory `./out` and create start scripts (shell/batch) for
 Weka's GUIChooser, using 1GB of heap size:
 
 ```
-java com.github.fracpete.bootstrapp.Main \
+java -jar bootstrapp-X.Y.Z-spring-boot.jar \
   -C \
   -d nz.ac.waikato.cms.weka:weka-dev:3.9.4 \
   -s \ 
@@ -157,9 +169,10 @@ Instead of generating a cross-platform application, the following example
 will generated a .deb package for Debian-based Linux distributions:
 
 ```
-java com.github.fracpete.bootstrapp.Main \
+java -jar bootstrapp-X.Y.Z-spring-boot.jar \
   -C \
   -d nz.ac.waikato.cms.weka:weka-dev:3.9.4 \
+  -s \ 
   -o ./out \
   -v -Xmx1g \
   -c weka.gui.GUIChooser \
@@ -181,6 +194,7 @@ public static class TestBootstrapp {
     String result = main
         .clean(true)
         .dependencies("nz.ac.waikato.cms.weka:weka-dev:3.9.4")
+        .sources(true)
         .outputDir(new File("./out"))
         .jvm("-Xmx1g")
         .mainClass("weka.gui.GUIChooser")
@@ -207,8 +221,9 @@ some additional libraries need to get installed on top of the `openjdk:11-jdk-sl
 ([docker.additional](src/main/resources/com/github/fracpete/bootstrapp/docker.additional)). 
 
 ```
-java com.github.fracpete.bootstrapp.Main \
+java -jar bootstrapp-X.Y.Z-spring-boot.jar \
   --dependency nz.ac.waikato.cms.weka:weka-dev:3.9.4 \
+  --sources
   --output_dir ./out \
   --clean \
   --jvm -Xmx1g \
@@ -232,6 +247,7 @@ public static class TestBootstrapp {
     Main main = new Main();
     String result = main
         .dependencies("nz.ac.waikato.cms.weka:weka-dev:3.9.4")
+        .sources(true)
         .outputDir(new File("./out"))
         .clean(true)
         .jvm("-Xmx1g")
@@ -281,6 +297,7 @@ for details on how to get it working on their platforms.
 Below are executable spring-boot jars for download that can be executed
 via `java -jar XYZ.jar [options]`:
 
+* [0.1.4](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.4/bootstrapp-0.1.4-spring-boot.jar)
 * [0.1.3](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.3/bootstrapp-0.1.3-spring-boot.jar)
 * [0.1.2](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.2/bootstrapp-0.1.2-spring-boot.jar)
 * [0.1.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.1/bootstrapp-0.1.1-spring-boot.jar)
@@ -296,7 +313,7 @@ via `java -jar XYZ.jar [options]`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>bootstrapp</artifactId>
-      <version>0.1.3</version>
+      <version>0.1.4</version>
     </dependency>
 ```
 
