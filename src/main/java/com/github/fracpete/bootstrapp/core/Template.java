@@ -1,6 +1,6 @@
 /*
  * Template.java
- * Copyright (C) 2020 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2020-2021 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.bootstrapp.core;
@@ -35,6 +35,9 @@ public class Template {
 
   /** the placeholder in the template POM for the dependencies (full dependencies tag). */
   public final static String PH_DEPENDENCIES = "<!-- dependencies -->";
+
+  /** the placeholder in the template POM for the repositories (full repositories tag). */
+  public final static String PH_REPOSITORIES = "<!-- repositories -->";
 
   /** the placeholder in the template POM for the output directory (directory string). */
   public final static String PH_OUTPUTDIR = "<!-- outputdir -->";
@@ -79,6 +82,9 @@ public class Template {
 
     /** the dependencies to use (group:artifact:version). */
     public List<String> dependencies;
+
+    /** the repositories to use (id;name;url). */
+    public List<String> repositories;
 
     /** the external jars to use. */
     public List<File> externalJars;
@@ -144,6 +150,8 @@ public class Template {
     String		line;
     StringBuilder	deps;
     String		depsStr;
+    StringBuilder	repos;
+    String		reposStr;
     String[]		parts;
     boolean		modified;
 
@@ -198,6 +206,24 @@ public class Template {
     if (config.dependencies.size() == 0)
       LOGGER.warning("No dependencies supplied!");
 
+    // build repository string
+    repos = new StringBuilder();
+    if ((config.repositories != null) && (config.repositories.size() > 0)) {
+      repos.append("  <repositories>\n");
+      for (String repo: config.repositories) {
+        parts = repo.split(";");
+        if (parts.length == 3) {
+          repos.append("    <repository>\n");
+          repos.append("      <id>").append(parts[0]).append("</id>\n");
+          repos.append("      <name>").append(parts[1]).append("</name>\n");
+          repos.append("      <url>").append(parts[2]).append("</url>\n");
+          repos.append("    </repository>\n");
+        }
+      }
+      repos.append("  </repositories>\n");
+    }
+    reposStr = repos.toString();
+
     try {
       modified = false;
       lines = Files.readAllLines(template.toPath());
@@ -207,6 +233,7 @@ public class Template {
           line = line.replace(PH_NAME, config.name);
           line = line.replace(PH_VERSION, config.version);
           line = line.replace(PH_DEPENDENCIES, depsStr);
+          line = line.replace(PH_REPOSITORIES, reposStr);
           line = line.replace(PH_OUTPUTDIR, config.outputDirMaven.getAbsolutePath());
           line = line.replace(PH_NOSOURCES, "" + config.noSources);
           line = line.replace(PH_NOSPRINGBOOT, "" + config.noSpringBoot);

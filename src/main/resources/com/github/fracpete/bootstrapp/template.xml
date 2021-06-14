@@ -17,6 +17,7 @@
   <name><!-- name --></name>
 
 <!-- dependencies -->
+<!-- repositories -->
 
   <build>
     <directory><!-- outputdir --></directory>

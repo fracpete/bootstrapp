@@ -14,10 +14,11 @@ Bootstrapping Java applications with Maven dependencies and/or jar files.
 
 Usage: [--help] [-m DIR] [-u FILE] [-j DIR] [-n NAME] [-V VERSION]
        [-d DEPENDENCY...] [-D DEPENDENCY_FILE...]
-       [-J JAR_OR_DIR...] [-C] [-s] [-S JAR_OR_DIR...]
-       [-p FILE] -o DIR [-c CLASSNAME] [-v JVM...] [-e] [-l]
-       [-b] [--deb] [--deb_snippet FILE] [--rpm] [--rpm_snippet FILE]
+       [-J JAR_OR_DIR...] [-r REPOSITORY...] [-C] [-s]
+       [-S JAR_OR_DIR...] [-p FILE] -o DIR [-c CLASSNAME] [-v JVM...]
+       [-e] [-l] [-b] [--deb] [--deb_snippet FILE] [--rpm] [--rpm_snippet FILE]
        [--docker] [--docker_base_image IMAGE] [--docker_snippet FILE]
+       [-z]
 
 Options:
 -m, --maven_home DIR
@@ -49,6 +50,11 @@ Options:
 -J, --external-jar JAR_OR_DIR
 	The external jar or directory with jar files to also include in the
 	application.
+
+-r, --repository REPOSITORY
+	The maven repository to use for bootstrapping the application (id;name;
+	url), e.g.: bedatadriven;bedatadriven public repo;
+	https://nexus.bedatadriven.com/content/groups/public/
 
 -C, --clean
 	If enabled, the 'clean' goals gets executed.
@@ -105,6 +111,11 @@ Options:
 
 --docker_snippet FILE
 	The file with custom docker instructions.
+
+-z, --compress_dir_structure
+	If enabled, the directory structure gets compressed (ie 'target' left
+	out). However, side-effect in combination with '--clean' is that the
+	'pom.xml' disappears.
 ```
 
 ## Examples

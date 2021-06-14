@@ -1,6 +1,6 @@
 /*
  * Main.java
- * Copyright (C) 2020 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2020-2021 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.bootstrapp;
@@ -71,6 +71,9 @@ public class Main {
   /** the external jar files/dirs. */
   protected List<File> m_ExternalJars;
 
+  /** the repositories. */
+  protected List<String> m_Repositories;
+
   /** the pom template. */
   protected File m_PomTemplate;
 
@@ -125,6 +128,9 @@ public class Main {
   /** whether to launch the main class. */
   protected boolean m_Launch;
 
+  /** whether to compress the directory structure. */
+  protected boolean m_CompressDirStructure;
+
   /** for logging. */
   protected Logger m_Logger;
 
@@ -142,33 +148,35 @@ public class Main {
    * Initializes the members.
    */
   protected void initialize() {
-    m_MavenHome         = null;
-    m_MavenUserSettings = null;
-    m_JavaHome          = null;
-    m_OutputDir         = null;
-    m_OutputDirMaven    = null;
-    m_JVM               = null;
-    m_Dependencies      = null;
-    m_DependencyFiles   = null;
-    m_ExternalJars      = null;
-    m_PomTemplate       = null;
-    m_Name              = Template.DEFAULT_NAME;
-    m_Version           = Template.DEFAULT_VERSION;
-    m_Clean             = false;
-    m_Sources           = false;
-    m_ExternalSources   = null;
-    m_Scripts           = false;
-    m_Launch            = false;
-    m_SpringBoot        = false;
-    m_Debian            = false;
-    m_DebianSnippet     = null;
-    m_Redhat            = false;
-    m_RedhatSnippet     = null;
-    m_Docker            = false;
-    m_DockerBaseImage   = null;
-    m_DockerSnippet     = null;
-    m_Logger            = null;
-    m_HelpRequested     = false;
+    m_MavenHome            = null;
+    m_MavenUserSettings    = null;
+    m_JavaHome             = null;
+    m_OutputDir            = null;
+    m_OutputDirMaven       = null;
+    m_JVM                  = null;
+    m_Dependencies         = null;
+    m_DependencyFiles      = null;
+    m_ExternalJars         = null;
+    m_Repositories         = null;
+    m_PomTemplate          = null;
+    m_Name                 = Template.DEFAULT_NAME;
+    m_Version              = Template.DEFAULT_VERSION;
+    m_Clean                = false;
+    m_Sources              = false;
+    m_ExternalSources      = null;
+    m_Scripts              = false;
+    m_Launch               = false;
+    m_SpringBoot           = false;
+    m_Debian               = false;
+    m_DebianSnippet        = null;
+    m_Redhat               = false;
+    m_RedhatSnippet        = null;
+    m_Docker               = false;
+    m_DockerBaseImage      = null;
+    m_DockerSnippet        = null;
+    m_CompressDirStructure = false;
+    m_Logger               = null;
+    m_HelpRequested        = false;
   }
 
   /**
@@ -439,7 +447,41 @@ public class Main {
   public List<File> getExternalJars() {
     return m_ExternalJars;
   }
-  
+
+  /**
+   * Sets the repositories to use for bootstrapping.
+   *
+   * @param repositories	the repositories, can be null
+   * @return		itself
+   */
+  public Main repositories(List<String> repositories) {
+    m_Repositories = repositories;
+    return this;
+  }
+
+  /**
+   * Sets the repositories to use for bootstrapping.
+   *
+   * @param repositories	the repositories, can be null
+   * @return		itself
+   */
+  public Main repositories(String... repositories) {
+    if (repositories != null)
+      m_Repositories = new ArrayList<>(Arrays.asList(repositories));
+    else
+      m_Repositories = null;
+    return this;
+  }
+
+  /**
+   * Returns the repositories.
+   *
+   * @return		the repositories, can be null
+   */
+  public List<String> getRepositories() {
+    return m_Repositories;
+  }
+
   /**
    * Sets whether to execute the "clean" goal.
    *
@@ -769,6 +811,28 @@ public class Main {
   }
 
   /**
+   * Sets whether to compress the directory structure.
+   * NB: The pom.xml will disappear when used in conjunction with "clean=true".
+   *
+   * @param compress	true if to compress
+   * @return		itself
+   */
+  public Main compressDirStructure(boolean compress) {
+    m_CompressDirStructure = compress;
+    return this;
+  }
+
+  /**
+   * Returns whether to compress the directory structure.
+   * NB: The pom.xml will disappear when used in conjunction with "clean=true".
+   *
+   * @return		true if to compress
+   */
+  public boolean getCompressDirStructure() {
+    return m_CompressDirStructure;
+  }
+
+  /**
    * Sets whether to launch the main class.
    *
    * @param launch	true if to launch
@@ -845,6 +909,12 @@ public class Main {
       .dest("external_jars")
       .metaVar("JAR_OR_DIR")
       .help("The external jar or directory with jar files to also include in the application.");
+    parser.addOption("-r", "--repository")
+      .required(false)
+      .multiple(true)
+      .dest("repositories")
+      .metaVar("REPOSITORY")
+      .help("The maven repository to use for bootstrapping the application (id;name;url), e.g.: bedatadriven;bedatadriven public repo;https://nexus.bedatadriven.com/content/groups/public/");
     parser.addOption("-C", "--clean")
       .type(Type.BOOLEAN)
       .setDefault(false)
@@ -937,6 +1007,11 @@ public class Main {
       .dest("docker_snippet")
       .metaVar("FILE")
       .help("The file with custom docker instructions.");
+    parser.addOption("-z", "--compress_dir_structure")
+      .type(Type.BOOLEAN)
+      .setDefault(false)
+      .dest("compress_dir_structure")
+      .help("If enabled, the directory structure gets compressed (ie 'target' left out). However, side-effect in combination with '--clean' is that the 'pom.xml' disappears.");
 
     return parser;
   }
@@ -958,6 +1033,7 @@ public class Main {
     dependencies(ns.getList("dependencies"));
     dependencyFiles(ns.getList("dependency_files"));
     externalJars(ns.getList("external_jars"));
+    repositories(ns.getList("repositories"));
     clean(ns.getBoolean("clean"));
     sources(ns.getBoolean("sources"));
     externalSources(ns.getList("external_sources"));
@@ -973,6 +1049,7 @@ public class Main {
     dockerBaseImage(ns.getString("docker_base_image"));
     dockerSnippet(ns.getFile("docker_snippet"));
     launch(ns.getBoolean("launch"));
+    compressDirStructure(ns.getBoolean("compress_dir_structure"));
     return true;
   }
 
@@ -1066,7 +1143,10 @@ public class Main {
     if (!m_OutputDir.isDirectory())
       return "Output directory is not a directory: " + m_OutputDir;
 
-    m_OutputDirMaven = new File(m_OutputDir.getAbsolutePath() + "/target");
+    if (m_CompressDirStructure)
+      m_OutputDirMaven = new File(m_OutputDir.getAbsolutePath());
+    else
+      m_OutputDirMaven = new File(m_OutputDir.getAbsolutePath() + "/target");
 
     return null;
   }
@@ -1116,6 +1196,7 @@ public class Main {
     config = new Configuration();
     config.outputDirMaven = m_OutputDirMaven;
     config.dependencies   = getAllDependencies();
+    config.repositories   = getRepositories();
     config.noSources      = !m_Sources;
     config.noSpringBoot   = !m_SpringBoot;
     config.mainClass      = m_MainClass;
@@ -1480,6 +1561,7 @@ public class Main {
     List<String>	content;
     String		startScript;
     String		name;
+    String		dirPrefix;
 
     if (m_DockerBaseImage == null)
       return "No Docker base image provided!";
@@ -1512,10 +1594,14 @@ public class Main {
       }
     }
 
+    if (m_CompressDirStructure)
+      dirPrefix = "";
+    else
+      dirPrefix = "target/";
     content.add("# copy libraries");
-    content.add("COPY target/lib/* /bootstrapp/" + name + "/lib/");
+    content.add("COPY " + dirPrefix + "lib/* /bootstrapp/" + name + "/lib/");
     if (m_Sources)
-      content.add("COPY target/src/* /bootstrapp/" + name + "/src/");
+      content.add("COPY " + dirPrefix + "src/* /bootstrapp/" + name + "/src/");
     startScript = null;
     if (m_MainClass != null) {
       startScript = "/bootstrapp/" + name + ".sh";
