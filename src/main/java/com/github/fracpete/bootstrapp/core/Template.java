@@ -83,6 +83,9 @@ public class Template {
     /** the dependencies to use (group:artifact:version). */
     public List<String> dependencies;
 
+    /** the exclusions to use (group:artifact or group:artifact:WHATEVER). */
+    public List<String> exclusions;
+
     /** the repositories to use (id;name;url). */
     public List<String> repositories;
 
@@ -148,12 +151,34 @@ public class Template {
     List<String>	lines;
     int			i;
     String		line;
+    StringBuilder	excls;
+    String		exclsStr;
     StringBuilder	deps;
     String		depsStr;
     StringBuilder	repos;
     String		reposStr;
     String[]		parts;
     boolean		modified;
+
+    // exclusions
+    excls = new StringBuilder();
+    if (config.exclusions != null) {
+      excls.append("      <exclusions>");
+      for (String exclusion: config.exclusions) {
+	parts = exclusion.split(":");
+	if (parts.length == 2) {
+	  excls.append("        <exclusion>\n");
+	  excls.append("          <groupId>").append(parts[0]).append("</groupId>\n");
+	  excls.append("          <artifactId>").append(parts[1]).append("</artifactId>\n");
+	  excls.append("        </exclusion>\n");
+	}
+	else {
+        LOGGER.warning("Skipping exclusion as it does not conform to format 'group:artifact': " + exclusion);
+	}
+      }
+      excls.append("      </exclusions>");
+    }
+    exclsStr = excls.toString();
 
     // build dependency string
     deps = new StringBuilder();
@@ -167,6 +192,8 @@ public class Template {
 	deps.append("      <groupId>").append(parts[0]).append("</groupId>\n");
 	deps.append("      <artifactId>").append(parts[1]).append("</artifactId>\n");
 	deps.append("      <version>").append(parts[2]).append("</version>\n");
+	if (!exclsStr.isEmpty())
+	  deps.append(exclsStr);
 	deps.append("    </dependency>\n");
       }
       else {

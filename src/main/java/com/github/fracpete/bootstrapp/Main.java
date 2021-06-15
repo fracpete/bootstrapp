@@ -71,6 +71,9 @@ public class Main {
   /** the external jar files/dirs. */
   protected List<File> m_ExternalJars;
 
+  /** the exclusions. */
+  protected List<String> m_Exclusions;
+
   /** the repositories. */
   protected List<String> m_Repositories;
 
@@ -157,6 +160,7 @@ public class Main {
     m_Dependencies         = null;
     m_DependencyFiles      = null;
     m_ExternalJars         = null;
+    m_Exclusions           = null;
     m_Repositories         = null;
     m_PomTemplate          = null;
     m_Name                 = Template.DEFAULT_NAME;
@@ -446,6 +450,40 @@ public class Main {
    */
   public List<File> getExternalJars() {
     return m_ExternalJars;
+  }
+
+  /**
+   * Sets the exclusions to use for bootstrapping.
+   *
+   * @param exclusions	the exclusions, can be null
+   * @return		itself
+   */
+  public Main exclusions(List<String> exclusions) {
+    m_Exclusions = exclusions;
+    return this;
+  }
+
+  /**
+   * Sets the exclusions to use for bootstrapping.
+   *
+   * @param exclusions	the exclusions, can be null
+   * @return		itself
+   */
+  public Main exclusions(String... exclusions) {
+    if (exclusions != null)
+      m_Exclusions = new ArrayList<>(Arrays.asList(exclusions));
+    else
+      m_Exclusions = null;
+    return this;
+  }
+
+  /**
+   * Returns the exclusions.
+   *
+   * @return		the exclusions, can be null
+   */
+  public List<String> getExclusions() {
+    return m_Exclusions;
   }
 
   /**
@@ -909,6 +947,12 @@ public class Main {
       .dest("external_jars")
       .metaVar("JAR_OR_DIR")
       .help("The external jar or directory with jar files to also include in the application.");
+    parser.addOption("-x", "--exclusion")
+      .required(false)
+      .multiple(true)
+      .dest("exclusions")
+      .metaVar("EXCLUSION")
+      .help("The maven artifacts to exclude from all the dependencies ('group:artifact').");
     parser.addOption("-r", "--repository")
       .required(false)
       .multiple(true)
@@ -1033,6 +1077,7 @@ public class Main {
     dependencies(ns.getList("dependencies"));
     dependencyFiles(ns.getList("dependency_files"));
     externalJars(ns.getList("external_jars"));
+    exclusions(ns.getList("exclusions"));
     repositories(ns.getList("repositories"));
     clean(ns.getBoolean("clean"));
     sources(ns.getBoolean("sources"));
@@ -1196,6 +1241,7 @@ public class Main {
     config = new Configuration();
     config.outputDirMaven = m_OutputDirMaven;
     config.dependencies   = getAllDependencies();
+    config.exclusions     = getExclusions();
     config.repositories   = getRepositories();
     config.noSources      = !m_Sources;
     config.noSpringBoot   = !m_SpringBoot;

@@ -14,11 +14,11 @@ Bootstrapping Java applications with Maven dependencies and/or jar files.
 
 Usage: [--help] [-m DIR] [-u FILE] [-j DIR] [-n NAME] [-V VERSION]
        [-d DEPENDENCY...] [-D DEPENDENCY_FILE...]
-       [-J JAR_OR_DIR...] [-r REPOSITORY...] [-C] [-s]
-       [-S JAR_OR_DIR...] [-p FILE] -o DIR [-c CLASSNAME] [-v JVM...]
-       [-e] [-l] [-b] [--deb] [--deb_snippet FILE] [--rpm] [--rpm_snippet FILE]
-       [--docker] [--docker_base_image IMAGE] [--docker_snippet FILE]
-       [-z]
+       [-J JAR_OR_DIR...] [-x EXCLUSION...] [-r REPOSITORY...] [-C]
+       [-s] [-S JAR_OR_DIR...] [-p FILE] -o DIR [-c CLASSNAME]
+       [-v JVM...] [-e] [-l] [-b] [--deb] [--deb_snippet FILE] [--rpm]
+       [--rpm_snippet FILE] [--docker] [--docker_base_image IMAGE]
+       [--docker_snippet FILE] [-z]
 
 Options:
 -m, --maven_home DIR
@@ -50,6 +50,10 @@ Options:
 -J, --external-jar JAR_OR_DIR
 	The external jar or directory with jar files to also include in the
 	application.
+
+-x, --exclusion EXCLUSION
+	The maven artifacts to exclude from all the dependencies
+	('group:artifact').
 
 -r, --repository REPOSITORY
 	The maven repository to use for bootstrapping the application (id;name;
