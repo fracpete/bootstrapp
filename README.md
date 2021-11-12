@@ -146,7 +146,7 @@ Weka's GUIChooser, using 1GB of heap size:
 java -jar bootstrapp-X.Y.Z-spring-boot.jar \
   -C \
   -d nz.ac.waikato.cms.weka:weka-dev:3.9.4 \
-  -s \ 
+  -s \
   -o ./out \
   -v -Xmx1g \
   -c weka.gui.GUIChooser \
@@ -187,7 +187,7 @@ will generated a .deb package for Debian-based Linux distributions:
 java -jar bootstrapp-X.Y.Z-spring-boot.jar \
   -C \
   -d nz.ac.waikato.cms.weka:weka-dev:3.9.4 \
-  -s \ 
+  -s \
   -o ./out \
   -v -Xmx1g \
   -c weka.gui.GUIChooser \
