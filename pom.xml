@@ -5,7 +5,7 @@
 
   <groupId>com.github.fracpete</groupId>
   <artifactId>bootstrapp</artifactId>
-  <version>0.1.11-SNAPSHOT</version>
+  <version>0.1.11</version>
   <packaging>jar</packaging>
 
   <parent>
@@ -83,7 +83,7 @@
     <connection>scm:git:ssh://git@github.com/fracpete/bootstrapp</connection>
     <developerConnection>scm:git:ssh://git@github.com/fracpete/bootstrapp</developerConnection>
     <url>https://github.com/fracpete/bootstrapp</url>
-    <tag>HEAD</tag>
+    <tag>bootstrapp-0.1.11</tag>
   </scm>
 
   <dependencies>
