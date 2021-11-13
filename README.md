@@ -312,20 +312,24 @@ for details on how to get it working on their platforms.
 Below are executable spring-boot jars for download that can be executed
 via `java -jar XYZ.jar [options]`:
 
+* [0.1.11](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.11/bootstrapp-0.1.11-spring-boot.jar)
 * [0.1.10](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.10/bootstrapp-0.1.10-spring-boot.jar)
 * [0.1.9](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.9/bootstrapp-0.1.9-spring-boot.jar)
 * [0.1.8](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.8/bootstrapp-0.1.8-spring-boot.jar)
-* [0.1.7](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.7/bootstrapp-0.1.7-spring-boot.jar)
-* [0.1.6](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.6/bootstrapp-0.1.6-spring-boot.jar)
-* [0.1.5](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.5/bootstrapp-0.1.5-spring-boot.jar)
-* [0.1.4](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.4/bootstrapp-0.1.4-spring-boot.jar)
-* [0.1.3](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.3/bootstrapp-0.1.3-spring-boot.jar)
-* [0.1.2](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.2/bootstrapp-0.1.2-spring-boot.jar)
-* [0.1.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.1/bootstrapp-0.1.1-spring-boot.jar)
-* [0.1.0](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.0/bootstrapp-0.1.0-spring-boot.jar)
-* [0.0.3](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.3/bootstrapp-0.0.3-spring-boot.jar)
-* [0.0.2](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.2/bootstrapp-0.0.2-spring-boot.jar)
-* [0.0.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.1/bootstrapp-0.0.1-spring-boot.jar)
+
+Old Releases:
+
+[0.1.7](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.7/bootstrapp-0.1.7-spring-boot.jar), 
+[0.1.6](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.6/bootstrapp-0.1.6-spring-boot.jar), 
+[0.1.5](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.5/bootstrapp-0.1.5-spring-boot.jar), 
+[0.1.4](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.4/bootstrapp-0.1.4-spring-boot.jar), 
+[0.1.3](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.3/bootstrapp-0.1.3-spring-boot.jar), 
+[0.1.2](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.2/bootstrapp-0.1.2-spring-boot.jar), 
+[0.1.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.1/bootstrapp-0.1.1-spring-boot.jar), 
+[0.1.0](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.0/bootstrapp-0.1.0-spring-boot.jar), 
+[0.0.3](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.3/bootstrapp-0.0.3-spring-boot.jar), 
+[0.0.2](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.2/bootstrapp-0.0.2-spring-boot.jar), 
+[0.0.1](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.0.1/bootstrapp-0.0.1-spring-boot.jar)
 
 
 ## Maven
@@ -334,7 +338,7 @@ via `java -jar XYZ.jar [options]`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>bootstrapp</artifactId>
-      <version>0.1.10</version>
+      <version>0.1.11</version>
     </dependency>
 ```
 
