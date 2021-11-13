@@ -120,6 +120,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.21</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.maven.plugins</groupId>
       <artifactId>maven-dependency-plugin</artifactId>
       <version>3.2.0</version>
@@ -217,6 +223,27 @@
               <classifier>spring-boot</classifier>
               <mainClass>com.github.fracpete.bootstrapp.Main</mainClass>
               <attach>false</attach>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- generates dependency graphs, get pdfs/flows/sources -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <!-- graph with all deps -->
+          <execution>
+            <id>tree-all</id>
+            <phase>package</phase>
+            <goals>
+              <goal>tree</goal>
+            </goals>
+            <configuration>
+              <outputType>graphml</outputType>
+              <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-all.graphml</outputFile>
             </configuration>
           </execution>
         </executions>
