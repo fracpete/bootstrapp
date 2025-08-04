@@ -64,7 +64,7 @@ public class ZipUtils {
     try {
       // unzip archive
       buffer  = new byte[bufferSize];
-      archive = new ZipFile(input.getAbsoluteFile());
+      archive = new ZipFile.Builder().setFile(input.getAbsoluteFile()).get();
       enm     = archive.getEntries();
       while (enm.hasMoreElements()) {
 	entry = enm.nextElement();
