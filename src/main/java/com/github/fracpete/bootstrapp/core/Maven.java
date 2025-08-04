@@ -1,6 +1,6 @@
 /*
  * Maven.java
- * Copyright (C) 2020 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2020-2025 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.bootstrapp.core;
@@ -8,7 +8,7 @@ package com.github.fracpete.bootstrapp.core;
 import com.github.fracpete.requests4j.Requests;
 import com.github.fracpete.requests4j.response.FileResponse;
 import com.github.fracpete.resourceextractor4j.Content;
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class Maven {
 
     if (VERSION == null) {
       lines = Content.readLines(Resources.LOCATION + "/" + DIR_FILE);
-      if ((lines != null) && (lines.size() > 0))
+      if ((lines != null) && (!lines.isEmpty()))
         VERSION = lines.get(0);
       else
         VERSION = "unknown";
