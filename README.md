@@ -312,6 +312,7 @@ for details on how to get it working on their platforms.
 Below are executable spring-boot jars for download that can be executed
 via `java -jar XYZ.jar [options]`:
 
+* [0.1.14](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.14/bootstrapp-0.1.14-spring-boot.jar)
 * [0.1.13](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.13/bootstrapp-0.1.13-spring-boot.jar)
 * [0.1.12](https://github.com/fracpete/bootstrapp/releases/download/bootstrapp-0.1.12/bootstrapp-0.1.12-spring-boot.jar)
 
@@ -340,7 +341,7 @@ Old Releases:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>bootstrapp</artifactId>
-      <version>0.1.13</version>
+      <version>0.1.14</version>
     </dependency>
 ```
 
